@@ -1,0 +1,88 @@
+const STORAGE_KEY = "SUIVI_DETTES_DATA";
+
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function calculateTotalGlobal() {
+  let total = 0;
+
+  Object.values(data).forEach(creditor => {
+    creditor.operations.forEach(op => {
+      if (op.type === "dette") total += op.montant;
+      if (op.type === "remboursement") total -= op.montant;
+    });
+  });
+
+  return total;
+}
+
+function render() {
+  const totalGlobal = document.getElementById("totalGlobal");
+  const creditorList = document.getElementById("creditorList");
+
+  totalGlobal.innerHTML = `
+    Solde Global : ${calculateTotalGlobal().toFixed(2)} €
+  `;
+
+  creditorList.innerHTML = "";
+
+  Object.keys(data).forEach(name => {
+    const creditor = data[name];
+
+    let total = 0;
+    creditor.operations.forEach(op => {
+      if (op.type === "dette") total += op.montant;
+      if (op.type === "remboursement") total -= op.montant;
+    });
+
+    const div = document.createElement("div");
+    div.className = "creditor-card";
+
+    div.innerHTML = `
+      <h3>${name}</h3>
+      <p>Solde : ${total.toFixed(2)} €</p>
+      <button onclick="addOperation('${name}', 'dette')">+ Dette</button>
+      <button onclick="addOperation('${name}', 'remboursement')">+ Remb.</button>
+    `;
+
+    creditorList.appendChild(div);
+  });
+}
+
+function addCreditor() {
+  const input = document.getElementById("newCreditorName");
+  const name = input.value.trim();
+
+  if (!name || data[name]) return;
+
+  data[name] = { operations: [] };
+  input.value = "";
+  saveData();
+  render();
+}
+
+function addOperation(name, type) {
+  const montant = parseFloat(prompt("Montant ?"));
+  if (!montant) return;
+
+  const today = new Date();
+  const date = today.toLocaleDateString("fr-FR");
+
+  data[name].operations.push({
+    type,
+    montant,
+    date
+  });
+
+  saveData();
+  render();
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+
+render();

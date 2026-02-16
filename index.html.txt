@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suivi Dettes</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+
+  <meta name="theme-color" content="#111827" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+</head>
+<body>
+
+  <div class="container">
+
+    <header>
+      <h1>Suivi des Dettes</h1>
+      <div id="totalGlobal" class="total-box"></div>
+    </header>
+
+    <section id="addCreditorSection">
+      <input type="text" id="newCreditorName" placeholder="Nom du créancier" />
+      <button onclick="addCreditor()">Ajouter</button>
+    </section>
+
+    <section id="creditorList"></section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
