@@ -1,16 +1,27 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Suivi Dettes</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+
+  <meta name="theme-color" content="#1f2937" />
 </head>
 <body>
-  <div class="container">
-    <h1>Suivi Dettes</h1>
-    <div id="app"></div>
+
+  <div id="app">
+
+    <!-- HEADER -->
+    <header class="header">
+      <h1>Suivi Dettes</h1>
+    </header>
+
+    <!-- ROUTER CONTAINER -->
+    <main id="view-container"></main>
+
   </div>
 
   <script src="app.js"></script>
@@ -20,5 +31,6 @@
       navigator.serviceWorker.register('service-worker.js');
     }
   </script>
+
 </body>
 </html>
