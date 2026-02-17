@@ -1,11 +1,11 @@
 /* ================================
-   SUIVI DETTES - VERSION COMPLETE V1
+   SUIVI DETTES - VERSION STABLE iPHONE
 ================================ */
 
 let data = JSON.parse(localStorage.getItem("dettesData")) || {};
-
 let currentCreditor = null;
 let currentTab = "dette";
+let pressTimer;
 
 /* ================================
    UTILITAIRES
@@ -16,8 +16,7 @@ function saveData() {
 }
 
 function formatDate(date) {
-  const d = new Date(date);
-  return d.toLocaleDateString("fr-FR");
+  return new Date(date).toLocaleDateString("fr-FR");
 }
 
 function calculateTotals(operations) {
@@ -47,8 +46,7 @@ function renderHome() {
   let totalGlobal = 0;
 
   Object.keys(data).forEach(name => {
-    const totals = calculateTotals(data[name]);
-    totalGlobal += totals.solde;
+    totalGlobal += calculateTotals(data[name]).solde;
   });
 
   app.innerHTML += `
@@ -56,6 +54,7 @@ function renderHome() {
     <div class="card total-card">
       <strong>Total : ${totalGlobal.toFixed(2)} €</strong>
     </div>
+
     <div class="button-group">
       <button onclick="addCreditor()">Ajouter créancier</button>
       <button onclick="toggleDarkMode()">Mode sombre</button>
@@ -67,13 +66,39 @@ function renderHome() {
 
     app.innerHTML += `
       <div class="card creditor-card"
-        onclick="openCreditor('${name}')"
-        oncontextmenu="deleteCreditor(event,'${name}')">
+        ontouchstart="startPressCreditor('${name}')"
+        ontouchend="cancelPress()"
+        onclick="openCreditor('${name}')">
         <h3>${name}</h3>
         <p>Solde : ${totals.solde.toFixed(2)} €</p>
       </div>
     `;
   });
+}
+
+/* ================================
+   LONG PRESS CREANCIER
+================================ */
+
+function startPressCreditor(name) {
+  pressTimer = setTimeout(() => {
+    const totals = calculateTotals(data[name]);
+
+    if (totals.solde !== 0) {
+      alert("Impossible : solde ≠ 0 €");
+      return;
+    }
+
+    if (confirm("Supprimer ce créancier ?")) {
+      delete data[name];
+      saveData();
+      renderHome();
+    }
+  }, 600);
+}
+
+function cancelPress() {
+  clearTimeout(pressTimer);
 }
 
 /* ================================
@@ -134,13 +159,28 @@ function renderOperations() {
   operations.forEach((op, index) => {
     container.innerHTML += `
       <div class="card operation-card"
-        oncontextmenu="deleteOperation(event,${index})">
+        ontouchstart="startPressOperation(${index})"
+        ontouchend="cancelPress()">
         <p>${formatDate(op.date)}</p>
         <p>${op.label}</p>
         <p>${op.amount.toFixed(2)} €</p>
       </div>
     `;
   });
+}
+
+function startPressOperation(index) {
+  pressTimer = setTimeout(() => {
+    if (confirm("Supprimer cette opération ?")) {
+      const filtered = data[currentCreditor].filter(op => op.type === currentTab);
+      const opToDelete = filtered[index];
+      const realIndex = data[currentCreditor].indexOf(opToDelete);
+
+      data[currentCreditor].splice(realIndex, 1);
+      saveData();
+      renderCreditor();
+    }
+  }, 600);
 }
 
 /* ================================
@@ -154,48 +194,15 @@ function showAddOperation() {
   const amount = parseFloat(prompt("Montant ?"));
   if (isNaN(amount)) return;
 
-  const newOp = {
+  data[currentCreditor].push({
     type: currentTab,
     label,
     amount,
     date: new Date().toISOString()
-  };
+  });
 
-  data[currentCreditor].push(newOp);
   saveData();
   renderCreditor();
-}
-
-/* ================================
-   SUPPRESSIONS
-================================ */
-
-function deleteOperation(e, index) {
-  e.preventDefault();
-  if (confirm("Supprimer cette opération ?")) {
-    const filtered = data[currentCreditor].filter(op => op.type === currentTab);
-    const opToDelete = filtered[index];
-    const realIndex = data[currentCreditor].indexOf(opToDelete);
-    data[currentCreditor].splice(realIndex, 1);
-    saveData();
-    renderCreditor();
-  }
-}
-
-function deleteCreditor(e, name) {
-  e.preventDefault();
-  const totals = calculateTotals(data[name]);
-
-  if (totals.solde !== 0) {
-    alert("Impossible : solde ≠ 0 €");
-    return;
-  }
-
-  if (confirm("Supprimer ce créancier ?")) {
-    delete data[name];
-    saveData();
-    renderHome();
-  }
 }
 
 /* ================================
@@ -220,7 +227,7 @@ function toggleDarkMode() {
 }
 
 /* ================================
-   INITIALISATION
+   INIT
 ================================ */
 
 renderHome();
