@@ -1,233 +1,175 @@
-/* ================================
-   SUIVI DETTES - VERSION STABLE iPHONE
-================================ */
+// ===============================
+// SUIVI DETTES - VERSION COMPLETE
+// ===============================
 
-let data = JSON.parse(localStorage.getItem("dettesData")) || {};
-let currentCreditor = null;
-let currentTab = "dette";
-let pressTimer;
+const app = document.getElementById("app");
 
-/* ================================
-   UTILITAIRES
-================================ */
+let currentCreditorId = null;
+let viewMode = "debts";
 
-function saveData() {
-  localStorage.setItem("dettesData", JSON.stringify(data));
+function getData() {
+  return JSON.parse(localStorage.getItem("suiviDettes")) || [];
 }
 
-function formatDate(date) {
-  return new Date(date).toLocaleDateString("fr-FR");
+function saveData(data) {
+  localStorage.setItem("suiviDettes", JSON.stringify(data));
 }
 
-function calculateTotals(operations) {
-  let totalDette = 0;
-  let totalRemb = 0;
-
-  operations.forEach(op => {
-    if (op.type === "dette") totalDette += op.amount;
-    if (op.type === "remboursement") totalRemb += op.amount;
-  });
-
-  return {
-    totalDette,
-    totalRemb,
-    solde: totalDette - totalRemb
-  };
+function generateId() {
+  return Date.now().toString();
 }
 
-/* ================================
-   ACCUEIL
-================================ */
+// ===============================
+// MAIN SCREEN
+// ===============================
 
 function renderHome() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
+  currentCreditorId = null;
+  const data = getData();
 
-  let totalGlobal = 0;
-
-  Object.keys(data).forEach(name => {
-    totalGlobal += calculateTotals(data[name]).solde;
+  let total = 0;
+  data.forEach(c => {
+    const debts = c.operations.filter(o => o.type === "debt")
+      .reduce((sum, o) => sum + o.amount, 0);
+    const payments = c.operations.filter(o => o.type === "payment")
+      .reduce((sum, o) => sum + o.amount, 0);
+    total += (debts - payments);
   });
 
-  app.innerHTML += `
+  app.innerHTML = `
     <h1>Suivi Dettes</h1>
-    <div class="card total-card">
-      <strong>Total : ${totalGlobal.toFixed(2)} €</strong>
+
+    <div class="card total">
+      <strong>Total : ${total.toFixed(2)} €</strong>
     </div>
 
-    <div class="button-group">
-      <button onclick="addCreditor()">Ajouter créancier</button>
-      <button onclick="toggleDarkMode()">Mode sombre</button>
-    </div>
+    <button onclick="addCreditor()">Ajouter créancier</button>
+
+    ${data.map(c => {
+      const debts = c.operations.filter(o => o.type === "debt")
+        .reduce((sum, o) => sum + o.amount, 0);
+      const payments = c.operations.filter(o => o.type === "payment")
+        .reduce((sum, o) => sum + o.amount, 0);
+      const balance = debts - payments;
+
+      return `
+        <div class="card" onclick="openCreditor('${c.id}')">
+          <h3>${c.name}</h3>
+          <p>Solde : ${balance.toFixed(2)} €</p>
+        </div>
+      `;
+    }).join("")}
   `;
+}
 
-  Object.keys(data).forEach(name => {
-    const totals = calculateTotals(data[name]);
+function addCreditor() {
+  const name = prompt("Nom du créancier ?");
+  if (!name) return;
 
-    app.innerHTML += `
-      <div class="card creditor-card"
-        ontouchstart="startPressCreditor('${name}')"
-        ontouchend="cancelPress()"
-        onclick="openCreditor('${name}')">
-        <h3>${name}</h3>
-        <p>Solde : ${totals.solde.toFixed(2)} €</p>
-      </div>
-    `;
+  const data = getData();
+  data.push({
+    id: generateId(),
+    name: name,
+    operations: []
   });
+
+  saveData(data);
+  renderHome();
 }
 
-/* ================================
-   LONG PRESS CREANCIER
-================================ */
+// ===============================
+// DETAIL SCREEN
+// ===============================
 
-function startPressCreditor(name) {
-  pressTimer = setTimeout(() => {
-    const totals = calculateTotals(data[name]);
-
-    if (totals.solde !== 0) {
-      alert("Impossible : solde ≠ 0 €");
-      return;
-    }
-
-    if (confirm("Supprimer ce créancier ?")) {
-      delete data[name];
-      saveData();
-      renderHome();
-    }
-  }, 600);
-}
-
-function cancelPress() {
-  clearTimeout(pressTimer);
-}
-
-/* ================================
-   CRÉANCIER
-================================ */
-
-function openCreditor(name) {
-  currentCreditor = name;
+function openCreditor(id) {
+  currentCreditorId = id;
   renderCreditor();
 }
 
 function renderCreditor() {
-  const app = document.getElementById("app");
-  const operations = data[currentCreditor];
+  const data = getData();
+  const creditor = data.find(c => c.id === currentCreditorId);
 
-  const totals = calculateTotals(operations);
+  const debts = creditor.operations.filter(o => o.type === "debt");
+  const payments = creditor.operations.filter(o => o.type === "payment");
+
+  const totalDebts = debts.reduce((sum, o) => sum + o.amount, 0);
+  const totalPayments = payments.reduce((sum, o) => sum + o.amount, 0);
+  const balance = totalDebts - totalPayments;
+
+  const filtered = viewMode === "debts" ? debts : payments;
 
   app.innerHTML = `
     <button onclick="renderHome()">⬅ Retour</button>
-    <h2>${currentCreditor}</h2>
+    <h2>${creditor.name}</h2>
 
-    <div class="card">
-      <p>Total dettes : ${totals.totalDette.toFixed(2)} €</p>
-      <p>Total remboursements : ${totals.totalRemb.toFixed(2)} €</p>
-      <p><strong>Solde restant : ${totals.solde.toFixed(2)} €</strong></p>
+    <div class="card total">
+      <p>Total dettes : ${totalDebts.toFixed(2)} €</p>
+      <p>Total remboursements : ${totalPayments.toFixed(2)} €</p>
+      <strong>Solde restant : ${balance.toFixed(2)} €</strong>
     </div>
 
-    <div class="tabs">
-      <button onclick="setTab('dette')" class="${currentTab === "dette" ? "active" : ""}">Dettes</button>
-      <button onclick="setTab('remboursement')" class="${currentTab === "remboursement" ? "active" : ""}">Remboursements</button>
+    <div>
+      <button onclick="switchView('debts')">Dettes</button>
+      <button onclick="switchView('payment')">Remboursements</button>
     </div>
 
-    <button onclick="showAddOperation()">Ajouter opération</button>
+    <button onclick="addOperation()">Ajouter opération</button>
 
-    <div id="operations"></div>
+    ${filtered.map(o => `
+      <div class="card">
+        <p>${o.date}</p>
+        <p>${o.label}</p>
+        <strong>${o.amount.toFixed(2)} €</strong>
+        <button onclick="deleteOperation('${o.id}')">Supprimer</button>
+      </div>
+    `).join("")}
   `;
-
-  renderOperations();
 }
 
-function setTab(tab) {
-  currentTab = tab;
+function switchView(mode) {
+  viewMode = mode === "payment" ? "payment" : "debts";
   renderCreditor();
 }
 
-/* ================================
-   OPERATIONS
-================================ */
+function addOperation() {
+  const type = confirm("OK = Dette / Annuler = Remboursement")
+    ? "debt"
+    : "payment";
 
-function renderOperations() {
-  const container = document.getElementById("operations");
-  const operations = data[currentCreditor]
-    .filter(op => op.type === currentTab)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  container.innerHTML = "";
-
-  operations.forEach((op, index) => {
-    container.innerHTML += `
-      <div class="card operation-card"
-        ontouchstart="startPressOperation(${index})"
-        ontouchend="cancelPress()">
-        <p>${formatDate(op.date)}</p>
-        <p>${op.label}</p>
-        <p>${op.amount.toFixed(2)} €</p>
-      </div>
-    `;
-  });
-}
-
-function startPressOperation(index) {
-  pressTimer = setTimeout(() => {
-    if (confirm("Supprimer cette opération ?")) {
-      const filtered = data[currentCreditor].filter(op => op.type === currentTab);
-      const opToDelete = filtered[index];
-      const realIndex = data[currentCreditor].indexOf(opToDelete);
-
-      data[currentCreditor].splice(realIndex, 1);
-      saveData();
-      renderCreditor();
-    }
-  }, 600);
-}
-
-/* ================================
-   AJOUT OPERATION
-================================ */
-
-function showAddOperation() {
-  const label = prompt("Label ?");
+  const label = prompt("Description ?");
   if (!label) return;
 
   const amount = parseFloat(prompt("Montant ?"));
   if (isNaN(amount)) return;
 
-  data[currentCreditor].push({
-    type: currentTab,
-    label,
-    amount,
-    date: new Date().toISOString()
+  const data = getData();
+  const creditor = data.find(c => c.id === currentCreditorId);
+
+  creditor.operations.push({
+    id: generateId(),
+    type: type,
+    label: label,
+    amount: amount,
+    date: new Date().toLocaleDateString()
   });
 
-  saveData();
+  saveData(data);
   renderCreditor();
 }
 
-/* ================================
-   AJOUT CRÉANCIER
-================================ */
+function deleteOperation(opId) {
+  const data = getData();
+  const creditor = data.find(c => c.id === currentCreditorId);
 
-function addCreditor() {
-  const name = prompt("Nom du créancier ?");
-  if (!name || data[name]) return;
+  creditor.operations = creditor.operations.filter(o => o.id !== opId);
 
-  data[name] = [];
-  saveData();
-  renderHome();
+  saveData(data);
+  renderCreditor();
 }
 
-/* ================================
-   MODE SOMBRE
-================================ */
-
-function toggleDarkMode() {
-  document.body.classList.toggle("dark");
-}
-
-/* ================================
-   INIT
-================================ */
+// ===============================
+// INIT
+// ===============================
 
 renderHome();
