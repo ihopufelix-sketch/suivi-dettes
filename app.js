@@ -1,19 +1,18 @@
-const app = document.getElementById("app");
+/* ================================
+   SUIVI DETTES - VERSION COMPLETE V1
+================================ */
 
-let data = JSON.parse(localStorage.getItem("dettes-data")) || {};
+let data = JSON.parse(localStorage.getItem("dettesData")) || {};
+
 let currentCreditor = null;
 let currentTab = "dette";
-let selectedYear = "all";
-let darkMode = localStorage.getItem("dark-mode") === "true";
 
-if (darkMode) document.body.classList.add("dark");
-
-/* ===============================
-UTILITAIRES
+/* ================================
+   UTILITAIRES
 ================================ */
 
 function saveData() {
-  localStorage.setItem("dettes-data", JSON.stringify(data));
+  localStorage.setItem("dettesData", JSON.stringify(data));
 }
 
 function formatDate(date) {
@@ -21,179 +20,207 @@ function formatDate(date) {
   return d.toLocaleDateString("fr-FR");
 }
 
-function getYears() {
-  const years = new Set();
-  Object.values(data).forEach(c => {
-    c.operations.forEach(o => {
-      years.add(new Date(o.date).getFullYear());
-    });
+function calculateTotals(operations) {
+  let totalDette = 0;
+  let totalRemb = 0;
+
+  operations.forEach(op => {
+    if (op.type === "dette") totalDette += op.amount;
+    if (op.type === "remboursement") totalRemb += op.amount;
   });
-  return Array.from(years).sort((a,b) => b - a);
+
+  return {
+    totalDette,
+    totalRemb,
+    solde: totalDette - totalRemb
+  };
 }
 
-/* ===============================
-HOME SCREEN
+/* ================================
+   ACCUEIL
 ================================ */
 
 function renderHome() {
-  currentCreditor = null;
+  const app = document.getElementById("app");
+  app.innerHTML = "";
 
   let totalGlobal = 0;
-  Object.values(data).forEach(c => {
-    totalGlobal += getSolde(c.operations);
+
+  Object.keys(data).forEach(name => {
+    const totals = calculateTotals(data[name]);
+    totalGlobal += totals.solde;
   });
 
-  app.innerHTML = `
-    <div class="header">
-      <h1>Suivi Dettes</h1>
+  app.innerHTML += `
+    <h1>Suivi Dettes</h1>
+    <div class="card total-card">
+      <strong>Total : ${totalGlobal.toFixed(2)} €</strong>
     </div>
-
-    <div class="card total">
-      Total : ${totalGlobal.toFixed(2)} €
-    </div>
-
-    <button class="button" onclick="addCreditor()">Ajouter créancier</button>
-    <button class="button" onclick="toggleDark()">Mode sombre</button>
-
-    <div style="margin-top:20px;">
-      ${Object.keys(data).map(name => `
-        <div class="list-item" onclick="openCreditor('${name}')">
-          <h3>${name}</h3>
-          <div class="amount">${getSolde(data[name].operations).toFixed(2)} €</div>
-        </div>
-      `).join("")}
+    <div class="button-group">
+      <button onclick="addCreditor()">Ajouter créancier</button>
+      <button onclick="toggleDarkMode()">Mode sombre</button>
     </div>
   `;
+
+  Object.keys(data).forEach(name => {
+    const totals = calculateTotals(data[name]);
+
+    app.innerHTML += `
+      <div class="card creditor-card"
+        onclick="openCreditor('${name}')"
+        oncontextmenu="deleteCreditor(event,'${name}')">
+        <h3>${name}</h3>
+        <p>Solde : ${totals.solde.toFixed(2)} €</p>
+      </div>
+    `;
+  });
 }
+
+/* ================================
+   CRÉANCIER
+================================ */
+
+function openCreditor(name) {
+  currentCreditor = name;
+  renderCreditor();
+}
+
+function renderCreditor() {
+  const app = document.getElementById("app");
+  const operations = data[currentCreditor];
+
+  const totals = calculateTotals(operations);
+
+  app.innerHTML = `
+    <button onclick="renderHome()">⬅ Retour</button>
+    <h2>${currentCreditor}</h2>
+
+    <div class="card">
+      <p>Total dettes : ${totals.totalDette.toFixed(2)} €</p>
+      <p>Total remboursements : ${totals.totalRemb.toFixed(2)} €</p>
+      <p><strong>Solde restant : ${totals.solde.toFixed(2)} €</strong></p>
+    </div>
+
+    <div class="tabs">
+      <button onclick="setTab('dette')" class="${currentTab === "dette" ? "active" : ""}">Dettes</button>
+      <button onclick="setTab('remboursement')" class="${currentTab === "remboursement" ? "active" : ""}">Remboursements</button>
+    </div>
+
+    <button onclick="showAddOperation()">Ajouter opération</button>
+
+    <div id="operations"></div>
+  `;
+
+  renderOperations();
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  renderCreditor();
+}
+
+/* ================================
+   OPERATIONS
+================================ */
+
+function renderOperations() {
+  const container = document.getElementById("operations");
+  const operations = data[currentCreditor]
+    .filter(op => op.type === currentTab)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  container.innerHTML = "";
+
+  operations.forEach((op, index) => {
+    container.innerHTML += `
+      <div class="card operation-card"
+        oncontextmenu="deleteOperation(event,${index})">
+        <p>${formatDate(op.date)}</p>
+        <p>${op.label}</p>
+        <p>${op.amount.toFixed(2)} €</p>
+      </div>
+    `;
+  });
+}
+
+/* ================================
+   AJOUT OPERATION
+================================ */
+
+function showAddOperation() {
+  const label = prompt("Label ?");
+  if (!label) return;
+
+  const amount = parseFloat(prompt("Montant ?"));
+  if (isNaN(amount)) return;
+
+  const newOp = {
+    type: currentTab,
+    label,
+    amount,
+    date: new Date().toISOString()
+  };
+
+  data[currentCreditor].push(newOp);
+  saveData();
+  renderCreditor();
+}
+
+/* ================================
+   SUPPRESSIONS
+================================ */
+
+function deleteOperation(e, index) {
+  e.preventDefault();
+  if (confirm("Supprimer cette opération ?")) {
+    const filtered = data[currentCreditor].filter(op => op.type === currentTab);
+    const opToDelete = filtered[index];
+    const realIndex = data[currentCreditor].indexOf(opToDelete);
+    data[currentCreditor].splice(realIndex, 1);
+    saveData();
+    renderCreditor();
+  }
+}
+
+function deleteCreditor(e, name) {
+  e.preventDefault();
+  const totals = calculateTotals(data[name]);
+
+  if (totals.solde !== 0) {
+    alert("Impossible : solde ≠ 0 €");
+    return;
+  }
+
+  if (confirm("Supprimer ce créancier ?")) {
+    delete data[name];
+    saveData();
+    renderHome();
+  }
+}
+
+/* ================================
+   AJOUT CRÉANCIER
+================================ */
 
 function addCreditor() {
   const name = prompt("Nom du créancier ?");
-  if (!name) return;
-  if (data[name]) return alert("Existe déjà");
-  data[name] = { operations: [] };
+  if (!name || data[name]) return;
+
+  data[name] = [];
   saveData();
   renderHome();
 }
 
-function openCreditor(name) {
-  currentCreditor = name;
-  renderDetail();
-}
-
-/* ===============================
-DETAIL SCREEN
+/* ================================
+   MODE SOMBRE
 ================================ */
 
-function renderDetail() {
-  const creditor = data[currentCreditor];
-  const solde = getSolde(creditor.operations);
-  const years = getYears();
-
-  let filteredOps = creditor.operations;
-
-  if (selectedYear !== "all") {
-    filteredOps = filteredOps.filter(o =>
-      new Date(o.date).getFullYear() == selectedYear
-    );
-  }
-
-  const dettes = filteredOps.filter(o => o.type === "dette");
-  const remboursements = filteredOps.filter(o => o.type === "remboursement");
-
-  const list = currentTab === "dette" ? dettes : remboursements;
-
-  app.innerHTML = `
-    <div class="back" onclick="renderHome()">← Retour</div>
-
-    <div class="header">
-      <h1>${currentCreditor}</h1>
-    </div>
-
-    <div class="card total">
-      Solde : ${solde.toFixed(2)} €
-    </div>
-
-    <div class="tabs">
-      <div class="tab ${currentTab === "dette" ? "active" : ""}" onclick="switchTab('dette')">Dettes</div>
-      <div class="tab ${currentTab === "remboursement" ? "active" : ""}" onclick="switchTab('remboursement')">Remb.</div>
-    </div>
-
-    <select onchange="changeYear(this.value)">
-      <option value="all">Toutes années</option>
-      ${years.map(y => `<option value="${y}" ${selectedYear==y?"selected":""}>${y}</option>`).join("")}
-    </select>
-
-    <button class="button" onclick="addOperation()">Ajouter opération</button>
-
-    <div style="margin-top:20px;">
-      ${list.map((o, i) => `
-        <div class="list-item" onclick="deleteOperation(${i})">
-          <div>${formatDate(o.date)}</div>
-          <div>${o.label}</div>
-          <div class="amount">${o.type==="dette" ? "+" : "-"} ${o.montant.toFixed(2)} €</div>
-        </div>
-      `).join("")}
-    </div>
-  `;
-}
-
-function switchTab(tab) {
-  currentTab = tab;
-  renderDetail();
-}
-
-function changeYear(year) {
-  selectedYear = year;
-  renderDetail();
-}
-
-function addOperation() {
-  const label = prompt("Label ?");
-  if (!label) return;
-
-  const montant = parseFloat(prompt("Montant ?"));
-  if (isNaN(montant)) return;
-
-  data[currentCreditor].operations.push({
-    type: currentTab,
-    label,
-    montant,
-    date: new Date().toISOString()
-  });
-
-  saveData();
-  renderDetail();
-}
-
-function deleteOperation(index) {
-  if (!confirm("Supprimer ?")) return;
-  data[currentCreditor].operations.splice(index, 1);
-  saveData();
-  renderDetail();
-}
-
-/* ===============================
-CALCUL SOLDE
-================================ */
-
-function getSolde(ops) {
-  const dette = ops.filter(o => o.type==="dette").reduce((s,o)=>s+o.montant,0);
-  const remb = ops.filter(o => o.type==="remboursement").reduce((s,o)=>s+o.montant,0);
-  return dette - remb;
-}
-
-/* ===============================
-MODE SOMBRE
-================================ */
-
-function toggleDark() {
-  darkMode = !darkMode;
+function toggleDarkMode() {
   document.body.classList.toggle("dark");
-  localStorage.setItem("dark-mode", darkMode);
 }
 
-/* ===============================
-INIT
+/* ================================
+   INITIALISATION
 ================================ */
 
 renderHome();
