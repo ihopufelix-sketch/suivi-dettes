@@ -1,30 +1,149 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f4f6fa;
+:root {
+  --bg: #f4f6fa;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --text: #111827;
+  --muted: #6b7280;
 }
 
-.container {
+body.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 600px;
+  margin: auto;
   padding: 20px;
 }
 
-h1 {
+.header {
   text-align: center;
+  margin-bottom: 30px;
 }
 
+.header h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+/* CARD */
 .card {
-  background: white;
+  background: var(--card);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+/* TOTAL */
+.total {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* BUTTONS */
+.button {
+  display: inline-block;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: 0.2s;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.button-danger {
+  background: var(--danger);
+}
+
+.button-success {
+  background: var(--success);
+}
+
+/* LIST */
+.list-item {
+  background: var(--card);
   padding: 15px;
   border-radius: 12px;
   margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  cursor: pointer;
 }
 
-button {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #2563eb;
+.list-item h3 {
+  margin-bottom: 5px;
+}
+
+.amount {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* INPUTS */
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+body.dark input {
+  background: #334155;
   color: white;
-  margin-top: 5px;
+  border: 1px solid #475569;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  background: var(--card);
+  cursor: pointer;
+  border-radius: 10px;
+  margin-right: 5px;
+}
+
+.tab.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* BACK BUTTON */
+.back {
+  margin-bottom: 15px;
+  cursor: pointer;
+  color: var(--primary);
 }
