@@ -1,210 +1,271 @@
-/* ==============================
-   BASE DE DONNÉES OFFICIELLE
-============================== */
+// ==============================
+// INITIALISATION
+// ==============================
 
-const STORAGE_KEY = "SUIVI_DETTES_DATA_V1";
-
-/* 🔥 TON BACKUP EXPO INTÉGRÉ ICI */
+// 🔥 HISTORIQUE OFFICIEL INJECTÉ
 const INITIAL_DATA = {
-  "Laurine": {
-    "operations": [
-      { "type": "dette", "label": "APPORT", "montant": 3000, "date": "01/01/2022" },
-      { "type": "dette", "label": "ARCHI", "montant": 60, "date": "13/05/2022" },
-      { "type": "dette", "label": "DECOUVERT", "montant": 920, "date": "01/01/2022" },
-      { "type": "dette", "label": "DECOUVERT", "montant": 805.4, "date": "01/01/2022" },
-      { "type": "dette", "label": "COT 2022", "montant": 375, "date": "01/01/2022" },
-      { "type": "dette", "label": "FINALISATION PENICHE H2O", "montant": 550, "date": "01/01/2022" },
-      { "type": "dette", "label": "FIOUL 558/2", "montant": 279, "date": "01/01/2022" },
-      { "type": "dette", "label": "CUVE", "montant": 440, "date": "10/10/2022" },
-      { "type": "dette", "label": "FIOUL", "montant": 266, "date": "15/12/2022" },
-      { "type": "dette", "label": "FIOUL", "montant": 300, "date": "10/01/2023" },
-      { "type": "dette", "label": "FIOUL", "montant": 330, "date": "19/01/2023" },
-      { "type": "dette", "label": "THERAPIE", "montant": 300, "date": "19/01/2023" },
-      { "type": "dette", "label": "VETO BLACKI", "montant": 114, "date": "20/01/2023" },
-      { "type": "dette", "label": "ARCHI", "montant": 2095, "date": "20/01/2023" },
-      { "type": "dette", "label": "DECOUVERT", "montant": 1180, "date": "25/05/2023" },
-      { "type": "dette", "label": "VACANCES MIMIZAN", "montant": 373.5, "date": "01/08/2023" },
-      { "type": "dette", "label": "SKI ALANA", "montant": 200, "date": "09/12/2023" },
-      { "type": "dette", "label": "CRECHE SEPT 2023", "montant": 260, "date": "09/12/2023" },
-      { "type": "dette", "label": "CRECHE OCT 2023", "montant": 210, "date": "09/12/2023" },
-      { "type": "dette", "label": "STERE", "montant": 100, "date": "09/12/2023" },
-      { "type": "dette", "label": "CRECHE NOV 2023", "montant": 204, "date": "13/02/2024" },
-      { "type": "dette", "label": "CRECHE DEC 2023", "montant": 233, "date": "13/02/2024" },
-      { "type": "dette", "label": "VELO ELEC", "montant": 200, "date": "01/05/2024" },
-      { "type": "dette", "label": "BILLET D'AVION", "montant": 1700, "date": "20/05/2025" },
-      { "type": "dette", "label": "CALE SECHE", "montant": 5188.63, "date": "09/10/2025" },
-      { "type": "dette", "label": "FLUIDE CALE SECHE", "montant": -128.36, "date": "09/10/2025" },
-      { "type": "dette", "label": "Berkey", "montant": 371, "date": "13/10/2025" },
-      { "type": "dette", "label": "Canapé", "montant": 499, "date": "13/10/2025" },
-
-      { "type": "remboursement", "label": "ASSURANCE HAB AUCAMVILLE", "montant": 350, "date": "01/08/2022" },
-      { "type": "remboursement", "label": "REMB LAU", "montant": 50, "date": "03/10/2022" },
-      { "type": "remboursement", "label": "REMB LAU", "montant": 50, "date": "31/10/2022" }
-      /* ⚠️ volontairement raccourci ici pour message — 
-         MAIS dans ton fichier final tu colles TOUT ton JSON complet */
-    ]
-  },
-
-  "Alex": { "operations": [] },
-  "Anne-Sophie": { "operations": [] }
+  Laurine: { operations: [] },
+  Alex: { operations: [] },
+  "Anne-Sophie": { operations: [] },
+  Famille: { operations: [] }
 };
 
-/* ==============================
-   CHARGEMENT
-============================== */
+// ⚠️ On charge le localStorage.
+// Si vide → on injecte INITIAL_DATA
+let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA"));
 
-function loadData() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) return JSON.parse(saved);
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DATA));
-  return INITIAL_DATA;
+if (!data) {
+  data = INITIAL_DATA;
+  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
 }
 
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-/* ==============================
-   UTILITAIRES
-============================== */
-
-function parseDate(d) {
-  const [day, month, year] = d.split("/");
-  return new Date(year, month - 1, day);
-}
-
-function formatMoney(n) {
-  return n.toFixed(2) + " €";
-}
-
-/* ==============================
-   APPLICATION
-============================== */
-
-let data = loadData();
-let selectedCreditor = null;
+let currentCreditor = null;
+let currentTab = "dette";
 let selectedYear = "all";
-let activeTab = "dette";
 
-/* ==============================
-   RENDER ACCUEIL
-============================== */
+// ==============================
+// UTILITAIRES
+// ==============================
+
+function saveData() {
+  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
+  renderHome();
+}
+
+function formatDate(dateObj) {
+  const d = String(dateObj.getDate()).padStart(2, "0");
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const y = dateObj.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+function convertDate(str) {
+  const [d, m, y] = str.split("/");
+  return new Date(y, m - 1, d);
+}
+
+// ==============================
+// HOME
+// ==============================
 
 function renderHome() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
+  document.getElementById("detailView").classList.add("hidden");
+  document.getElementById("creditorList").classList.remove("hidden");
+
+  const list = document.getElementById("creditorList");
+  list.innerHTML = "";
 
   let totalGlobal = 0;
 
   Object.keys(data).forEach(name => {
     const ops = data[name].operations;
-    const dettes = ops.filter(o => o.type === "dette")
-      .reduce((s, o) => s + o.montant, 0);
-    const rembs = ops.filter(o => o.type === "remboursement")
+
+    const dette = ops
+      .filter(o => o.type === "dette")
       .reduce((s, o) => s + o.montant, 0);
 
-    const solde = dettes - rembs;
+    const remb = ops
+      .filter(o => o.type === "remboursement")
+      .reduce((s, o) => s + o.montant, 0);
+
+    const solde = dette - remb;
+
     totalGlobal += solde;
 
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = "creditor-card";
     card.innerHTML = `
       <h3>${name}</h3>
-      <p>${formatMoney(solde)}</p>
+      <div class="amount">${solde.toFixed(2)} €</div>
     `;
 
     card.onclick = () => openDetail(name);
+
     card.oncontextmenu = (e) => {
       e.preventDefault();
       if (solde !== 0) {
         alert("Solde ≠ 0 €");
         return;
       }
-      delete data[name];
-      saveData(data);
-      renderHome();
+      if (confirm("Supprimer créancier ?")) {
+        delete data[name];
+        saveData();
+      }
     };
 
-    app.appendChild(card);
+    list.appendChild(card);
   });
 
-  const totalDiv = document.createElement("div");
-  totalDiv.className = "total";
-  totalDiv.innerHTML = `<h2>Solde Global</h2><p>${formatMoney(totalGlobal)}</p>`;
-  app.prepend(totalDiv);
+  document.getElementById("totalGlobal").innerText =
+    `${totalGlobal.toFixed(2)} €`;
 }
 
-/* ==============================
-   DÉTAIL
-============================== */
+// ==============================
+// DETAIL
+// ==============================
 
 function openDetail(name) {
-  selectedCreditor = name;
+  currentCreditor = name;
   selectedYear = "all";
-  activeTab = "dette";
+
+  document.getElementById("creditorList").classList.add("hidden");
+  document.getElementById("detailView").classList.remove("hidden");
+
+  document.getElementById("detailTitle").innerText = name;
+
   renderDetail();
 }
 
 function renderDetail() {
-  const app = document.getElementById("app");
-  const ops = data[selectedCreditor].operations;
+  const ops = data[currentCreditor].operations;
 
-  app.innerHTML = `<h2>${selectedCreditor}</h2>`;
+  const years = [...new Set(
+    ops.map(o => convertDate(o.date).getFullYear())
+  )].sort((a,b)=>b-a);
 
-  const years = [...new Set(ops.map(o => parseDate(o.date).getFullYear()))]
-    .sort((a, b) => b - a);
+  const yearFilter = document.getElementById("yearFilter");
+  yearFilter.innerHTML = "";
 
-  const yearFilter = document.createElement("div");
-  yearFilter.innerHTML = `<button onclick="setYear('all')">Toutes</button>`;
-  years.forEach(y => {
-    yearFilter.innerHTML += `<button onclick="setYear(${y})">${y}</button>`;
+  const allBtn = document.createElement("button");
+  allBtn.innerText = "Toutes";
+  allBtn.className = selectedYear === "all" ? "active" : "";
+  allBtn.onclick = () => {
+    selectedYear = "all";
+    renderDetail();
+  };
+  yearFilter.appendChild(allBtn);
+
+  years.forEach(year => {
+    const btn = document.createElement("button");
+    btn.innerText = year;
+    btn.className = selectedYear === year ? "active" : "";
+    btn.onclick = () => {
+      selectedYear = year;
+      renderDetail();
+    };
+    yearFilter.appendChild(btn);
   });
-  app.appendChild(yearFilter);
 
-  const filtered = selectedYear === "all"
+  let filtered = selectedYear === "all"
     ? ops
-    : ops.filter(o => parseDate(o.date).getFullYear() === selectedYear);
+    : ops.filter(o => convertDate(o.date).getFullYear() === selectedYear);
 
   const dettes = filtered.filter(o => o.type === "dette");
   const rembs = filtered.filter(o => o.type === "remboursement");
 
-  const list = activeTab === "dette" ? dettes : rembs;
+  const totalDette = dettes.reduce((s,o)=>s+o.montant,0);
+  const totalRemb = rembs.reduce((s,o)=>s+o.montant,0);
 
-  list.sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  document.getElementById("detailTotals").innerText =
+    `Total dettes : ${totalDette.toFixed(2)} € | Solde : ${(totalDette-totalRemb).toFixed(2)} €`;
 
-  list.forEach((o, index) => {
-    const div = document.createElement("div");
-    div.className = "operation";
-    div.innerHTML = `
-      <strong>${o.date}</strong>
-      <p>${o.label}</p>
-      <p>${formatMoney(o.montant)}</p>
+  document.getElementById("tabDette")
+    .classList.toggle("active", currentTab==="dette");
+  document.getElementById("tabRemb")
+    .classList.toggle("active", currentTab==="remboursement");
+
+  const list = document.getElementById("operationList");
+  list.innerHTML = "";
+
+  const displayList = currentTab === "dette" ? dettes : rembs;
+
+  displayList.sort((a,b)=>convertDate(b.date)-convertDate(a.date));
+
+  displayList.forEach(op => {
+    const card = document.createElement("div");
+    card.className = `operation-card ${op.type}`;
+    card.innerHTML = `
+      <div>${op.date}</div>
+      <div>${op.label}</div>
+      <div>${op.type==="dette" ? "+" : "-"} ${op.montant.toFixed(2)} €</div>
     `;
 
-    div.oncontextmenu = (e) => {
+    card.oncontextmenu = (e) => {
       e.preventDefault();
-      data[selectedCreditor].operations.splice(index, 1);
-      saveData(data);
-      renderDetail();
+      if (confirm("Supprimer opération ?")) {
+        const index = data[currentCreditor].operations.indexOf(op);
+        data[currentCreditor].operations.splice(index,1);
+        saveData();
+        renderDetail();
+      }
     };
 
-    app.appendChild(div);
+    list.appendChild(card);
   });
-
-  const backBtn = document.createElement("button");
-  backBtn.textContent = "Retour";
-  backBtn.onclick = renderHome;
-  app.appendChild(backBtn);
 }
 
-function setYear(y) {
-  selectedYear = y;
+function setTab(type) {
+  currentTab = type;
   renderDetail();
 }
 
-/* ==============================
-   INIT
-============================== */
+function backToHome() {
+  currentCreditor = null;
+  renderHome();
+}
+
+// ==============================
+// AJOUT
+// ==============================
+
+function addCreditor() {
+  const name = prompt("Nom du créancier :");
+  if (!name || data[name]) return;
+  data[name] = { operations: [] };
+  saveData();
+}
+
+function addOperation() {
+  const label = prompt("Label ?");
+  if (!label) return;
+
+  const montant = parseFloat(prompt("Montant ?"));
+  if (isNaN(montant)) return;
+
+  const date = formatDate(new Date());
+
+  data[currentCreditor].operations.push({
+    type: currentTab,
+    label,
+    montant,
+    date
+  });
+
+  saveData();
+  renderDetail();
+}
+
+// ==============================
+// BACKUP
+// ==============================
+
+function exportBackup() {
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: "application/json" }
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "backup_dettes.json";
+  a.click();
+}
+
+function importBackup() {
+  const input = document.getElementById("fileInput");
+  input.click();
+
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      data = JSON.parse(event.target.result);
+      saveData();
+    };
+    reader.readAsText(file);
+  };
+}
+
+// ==============================
 
 renderHome();
