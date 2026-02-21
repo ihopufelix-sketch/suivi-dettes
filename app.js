@@ -1,175 +1,246 @@
-// ===============================
-// SUIVI DETTES - VERSION COMPLETE
-// ===============================
+// ==============================
+// INITIALISATION
+// ==============================
 
-const app = document.getElementById("app");
+let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA")) || {
+  Laurine: { operations: [] },
+  Alex: { operations: [] },
+  "Anne-Sophie": { operations: [] },
+  Famille: { operations: [] }
+};
 
-let currentCreditorId = null;
-let viewMode = "debts";
+let currentCreditor = null;
+let currentTab = "dette";
+let selectedYear = "all";
 
-function getData() {
-  return JSON.parse(localStorage.getItem("suiviDettes")) || [];
-}
+// ==============================
+// UTILITAIRES
+// ==============================
 
-function saveData(data) {
-  localStorage.setItem("suiviDettes", JSON.stringify(data));
-}
-
-function generateId() {
-  return Date.now().toString();
-}
-
-// ===============================
-// MAIN SCREEN
-// ===============================
-
-function renderHome() {
-  currentCreditorId = null;
-  const data = getData();
-
-  let total = 0;
-  data.forEach(c => {
-    const debts = c.operations.filter(o => o.type === "debt")
-      .reduce((sum, o) => sum + o.amount, 0);
-    const payments = c.operations.filter(o => o.type === "payment")
-      .reduce((sum, o) => sum + o.amount, 0);
-    total += (debts - payments);
-  });
-
-  app.innerHTML = `
-    <h1>Suivi Dettes</h1>
-
-    <div class="card total">
-      <strong>Total : ${total.toFixed(2)} €</strong>
-    </div>
-
-    <button onclick="addCreditor()">Ajouter créancier</button>
-
-    ${data.map(c => {
-      const debts = c.operations.filter(o => o.type === "debt")
-        .reduce((sum, o) => sum + o.amount, 0);
-      const payments = c.operations.filter(o => o.type === "payment")
-        .reduce((sum, o) => sum + o.amount, 0);
-      const balance = debts - payments;
-
-      return `
-        <div class="card" onclick="openCreditor('${c.id}')">
-          <h3>${c.name}</h3>
-          <p>Solde : ${balance.toFixed(2)} €</p>
-        </div>
-      `;
-    }).join("")}
-  `;
-}
-
-function addCreditor() {
-  const name = prompt("Nom du créancier ?");
-  if (!name) return;
-
-  const data = getData();
-  data.push({
-    id: generateId(),
-    name: name,
-    operations: []
-  });
-
-  saveData(data);
+function saveData() {
+  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
   renderHome();
 }
 
-// ===============================
-// DETAIL SCREEN
-// ===============================
-
-function openCreditor(id) {
-  currentCreditorId = id;
-  renderCreditor();
+function formatDate(dateObj) {
+  const d = String(dateObj.getDate()).padStart(2, "0");
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const y = dateObj.getFullYear();
+  return `${d}/${m}/${y}`;
 }
 
-function renderCreditor() {
-  const data = getData();
-  const creditor = data.find(c => c.id === currentCreditorId);
-
-  const debts = creditor.operations.filter(o => o.type === "debt");
-  const payments = creditor.operations.filter(o => o.type === "payment");
-
-  const totalDebts = debts.reduce((sum, o) => sum + o.amount, 0);
-  const totalPayments = payments.reduce((sum, o) => sum + o.amount, 0);
-  const balance = totalDebts - totalPayments;
-
-  const filtered = viewMode === "debts" ? debts : payments;
-
-  app.innerHTML = `
-    <button onclick="renderHome()">⬅ Retour</button>
-    <h2>${creditor.name}</h2>
-
-    <div class="card total">
-      <p>Total dettes : ${totalDebts.toFixed(2)} €</p>
-      <p>Total remboursements : ${totalPayments.toFixed(2)} €</p>
-      <strong>Solde restant : ${balance.toFixed(2)} €</strong>
-    </div>
-
-    <div>
-      <button onclick="switchView('debts')">Dettes</button>
-      <button onclick="switchView('payment')">Remboursements</button>
-    </div>
-
-    <button onclick="addOperation()">Ajouter opération</button>
-
-    ${filtered.map(o => `
-      <div class="card">
-        <p>${o.date}</p>
-        <p>${o.label}</p>
-        <strong>${o.amount.toFixed(2)} €</strong>
-        <button onclick="deleteOperation('${o.id}')">Supprimer</button>
-      </div>
-    `).join("")}
-  `;
+function convertDate(str) {
+  const [d, m, y] = str.split("/");
+  return new Date(y, m - 1, d);
 }
 
-function switchView(mode) {
-  viewMode = mode === "payment" ? "payment" : "debts";
-  renderCreditor();
+// ==============================
+// HOME
+// ==============================
+
+function renderHome() {
+  document.getElementById("detailView").classList.add("hidden");
+  document.getElementById("creditorList").classList.remove("hidden");
+
+  const list = document.getElementById("creditorList");
+  list.innerHTML = "";
+
+  let totalGlobal = 0;
+
+  Object.keys(data).forEach(name => {
+    const ops = data[name].operations;
+    const dette = ops.filter(o => o.type === "dette").reduce((s, o) => s + o.montant, 0);
+    const remb = ops.filter(o => o.type === "remboursement").reduce((s, o) => s + o.montant, 0);
+    const solde = dette - remb;
+
+    totalGlobal += solde;
+
+    const card = document.createElement("div");
+    card.className = "creditor-card";
+    card.innerHTML = `
+      <h3>${name}</h3>
+      <div class="amount">${solde.toFixed(2)} €</div>
+    `;
+
+    card.onclick = () => openDetail(name);
+
+    card.oncontextmenu = (e) => {
+      e.preventDefault();
+      if (solde !== 0) {
+        alert("Solde ≠ 0 €");
+        return;
+      }
+      if (confirm("Supprimer créancier ?")) {
+        delete data[name];
+        saveData();
+      }
+    };
+
+    list.appendChild(card);
+  });
+
+  document.getElementById("totalGlobal").innerText = `${totalGlobal.toFixed(2)} €`;
+}
+
+// ==============================
+// DETAIL
+// ==============================
+
+function openDetail(name) {
+  currentCreditor = name;
+  selectedYear = "all";
+
+  document.getElementById("creditorList").classList.add("hidden");
+  document.getElementById("detailView").classList.remove("hidden");
+
+  document.getElementById("detailTitle").innerText = name;
+
+  renderDetail();
+}
+
+function renderDetail() {
+  const ops = data[currentCreditor].operations;
+
+  const years = [...new Set(ops.map(o => convertDate(o.date).getFullYear()))].sort((a,b)=>b-a);
+
+  const yearFilter = document.getElementById("yearFilter");
+  yearFilter.innerHTML = "";
+
+  const allBtn = document.createElement("button");
+  allBtn.innerText = "Toutes";
+  allBtn.className = selectedYear === "all" ? "active" : "";
+  allBtn.onclick = () => {
+    selectedYear = "all";
+    renderDetail();
+  };
+  yearFilter.appendChild(allBtn);
+
+  years.forEach(year => {
+    const btn = document.createElement("button");
+    btn.innerText = year;
+    btn.className = selectedYear === year ? "active" : "";
+    btn.onclick = () => {
+      selectedYear = year;
+      renderDetail();
+    };
+    yearFilter.appendChild(btn);
+  });
+
+  let filtered = selectedYear === "all"
+    ? ops
+    : ops.filter(o => convertDate(o.date).getFullYear() === selectedYear);
+
+  const dettes = filtered.filter(o => o.type === "dette");
+  const rembs = filtered.filter(o => o.type === "remboursement");
+
+  const totalDette = dettes.reduce((s,o)=>s+o.montant,0);
+  const totalRemb = rembs.reduce((s,o)=>s+o.montant,0);
+
+  document.getElementById("detailTotals").innerText =
+    `Total dettes : ${totalDette.toFixed(2)} € | Solde : ${(totalDette-totalRemb).toFixed(2)} €`;
+
+  document.getElementById("tabDette").classList.toggle("active", currentTab==="dette");
+  document.getElementById("tabRemb").classList.toggle("active", currentTab==="remboursement");
+
+  const list = document.getElementById("operationList");
+  list.innerHTML = "";
+
+  const displayList = currentTab === "dette" ? dettes : rembs;
+
+  displayList.sort((a,b)=>convertDate(b.date)-convertDate(a.date));
+
+  displayList.forEach(op => {
+    const card = document.createElement("div");
+    card.className = `operation-card ${op.type}`;
+    card.innerHTML = `
+      <div>${op.date}</div>
+      <div>${op.label}</div>
+      <div>${op.type==="dette" ? "+" : "-"} ${op.montant.toFixed(2)} €</div>
+    `;
+
+    card.oncontextmenu = (e) => {
+      e.preventDefault();
+      if (confirm("Supprimer opération ?")) {
+        const index = data[currentCreditor].operations.indexOf(op);
+        data[currentCreditor].operations.splice(index,1);
+        saveData();
+        renderDetail();
+      }
+    };
+
+    list.appendChild(card);
+  });
+}
+
+function setTab(type) {
+  currentTab = type;
+  renderDetail();
+}
+
+function backToHome() {
+  currentCreditor = null;
+  renderHome();
+}
+
+// ==============================
+// AJOUT
+// ==============================
+
+function addCreditor() {
+  const name = prompt("Nom du créancier :");
+  if (!name || data[name]) return;
+  data[name] = { operations: [] };
+  saveData();
 }
 
 function addOperation() {
-  const type = confirm("OK = Dette / Annuler = Remboursement")
-    ? "debt"
-    : "payment";
-
-  const label = prompt("Description ?");
+  const label = prompt("Label ?");
   if (!label) return;
 
-  const amount = parseFloat(prompt("Montant ?"));
-  if (isNaN(amount)) return;
+  const montant = parseFloat(prompt("Montant ?"));
+  if (isNaN(montant)) return;
 
-  const data = getData();
-  const creditor = data.find(c => c.id === currentCreditorId);
+  const date = formatDate(new Date());
 
-  creditor.operations.push({
-    id: generateId(),
-    type: type,
-    label: label,
-    amount: amount,
-    date: new Date().toLocaleDateString()
+  data[currentCreditor].operations.push({
+    type: currentTab,
+    label,
+    montant,
+    date
   });
 
-  saveData(data);
-  renderCreditor();
+  saveData();
+  renderDetail();
 }
 
-function deleteOperation(opId) {
-  const data = getData();
-  const creditor = data.find(c => c.id === currentCreditorId);
+// ==============================
+// BACKUP
+// ==============================
 
-  creditor.operations = creditor.operations.filter(o => o.id !== opId);
-
-  saveData(data);
-  renderCreditor();
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "backup_dettes.json";
+  a.click();
 }
 
-// ===============================
-// INIT
-// ===============================
+function importBackup() {
+  const input = document.getElementById("fileInput");
+  input.click();
+
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      data = JSON.parse(event.target.result);
+      saveData();
+    };
+    reader.readAsText(file);
+  };
+}
+
+// ==============================
 
 renderHome();
