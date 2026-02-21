@@ -5,32 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Suivi Dettes</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 
-  <meta name="theme-color" content="#1f2937" />
+  <meta name="theme-color" content="#111827">
 </head>
+
 <body>
 
   <div id="app">
 
-    <!-- HEADER -->
     <header class="header">
-      <h1>Suivi Dettes</h1>
+      <h1>Suivi des dettes</h1>
+      <div id="totalGlobal" class="total-global"></div>
     </header>
 
-    <!-- ROUTER CONTAINER -->
-    <main id="view-container"></main>
+    <section class="actions">
+      <button onclick="addCreditor()">+ Ajouter créancier</button>
+      <button onclick="exportBackup()">Export Backup</button>
+      <button onclick="importBackup()">Import Backup</button>
+      <input type="file" id="fileInput" hidden>
+    </section>
+
+    <section id="creditorList"></section>
+
+    <section id="detailView" class="hidden">
+      <button onclick="backToHome()">← Retour</button>
+      <h2 id="detailTitle"></h2>
+      <div id="detailTotals"></div>
+
+      <div id="yearFilter" class="year-filter"></div>
+
+      <div class="tabs">
+        <button id="tabDette" onclick="setTab('dette')">Dettes</button>
+        <button id="tabRemb" onclick="setTab('remboursement')">Remb.</button>
+      </div>
+
+      <button onclick="addOperation()">+ Ajouter opération</button>
+
+      <div id="operationList"></div>
+    </section>
 
   </div>
 
   <script src="app.js"></script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-  </script>
 
 </body>
 </html>
