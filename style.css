@@ -1,19 +1,6 @@
-:root {
-  --bg: #f4f6fa;
-  --card: #ffffff;
-  --primary: #2563eb;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --text: #111827;
-  --muted: #6b7280;
-}
-
-body.dark {
-  --bg: #0f172a;
-  --card: #1e293b;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-}
+/* ===========================
+   BASE
+=========================== */
 
 * {
   box-sizing: border-box;
@@ -23,127 +10,205 @@ body.dark {
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
-
-#app {
-  max-width: 600px;
-  margin: auto;
+  background: #f4f6fa;
+  color: #111827;
   padding: 20px;
 }
 
+/* ===========================
+   HEADER
+=========================== */
+
 .header {
-  text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .header h1 {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 10px;
 }
 
-/* CARD */
-.card {
-  background: var(--card);
+.total-global {
+  font-size: 32px;
+  font-weight: bold;
+  background: #111827;
+  color: white;
   padding: 20px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
+  text-align: center;
 }
 
-/* TOTAL */
-.total {
-  font-size: 24px;
+/* ===========================
+   ACTION BUTTONS
+=========================== */
+
+.actions {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+button {
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.actions button:nth-child(1) {
+  background: #2563eb;
+  color: white;
+}
+
+.actions button:nth-child(2) {
+  background: #10b981;
+  color: white;
+}
+
+.actions button:nth-child(3) {
+  background: #f59e0b;
+  color: white;
+}
+
+/* ===========================
+   CREDITOR CARDS
+=========================== */
+
+.creditor-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.creditor-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.creditor-card .amount {
+  font-size: 22px;
   font-weight: bold;
 }
 
-/* BUTTONS */
-.button {
-  display: inline-block;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: var(--primary);
+/* ===========================
+   DETAIL VIEW
+=========================== */
+
+.hidden {
+  display: none;
+}
+
+#detailView {
+  margin-top: 20px;
+}
+
+#detailTitle {
+  font-size: 20px;
+  margin: 10px 0;
+}
+
+#detailTotals {
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* ===========================
+   YEAR FILTER
+=========================== */
+
+.year-filter {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-bottom: 15px;
+}
+
+.year-filter button {
+  background: #e5e7eb;
+  color: #111827;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.year-filter button.active {
+  background: #2563eb;
   color: white;
-  text-align: center;
-  cursor: pointer;
-  border: none;
-  font-size: 16px;
-  margin-top: 10px;
-  transition: 0.2s;
 }
 
-.button:hover {
-  opacity: 0.9;
+/* ===========================
+   TABS
+=========================== */
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-.button-danger {
-  background: var(--danger);
+.tabs button {
+  flex: 1;
+  background: #e5e7eb;
 }
 
-.button-success {
-  background: var(--success);
+.tabs button.active {
+  background: #2563eb;
+  color: white;
 }
 
-/* LIST */
-.list-item {
-  background: var(--card);
+/* ===========================
+   OPERATIONS
+=========================== */
+
+.operation-card {
   padding: 15px;
   border-radius: 12px;
   margin-bottom: 10px;
-  cursor: pointer;
+  background: #f9fafb;
 }
 
-.list-item h3 {
-  margin-bottom: 5px;
+.operation-card.dette {
+  background: #fee2e2;
 }
 
-.amount {
-  font-weight: bold;
-  font-size: 18px;
+.operation-card.remboursement {
+  background: #dcfce7;
 }
 
-/* INPUTS */
-input, select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  margin-bottom: 12px;
-  font-size: 16px;
-}
+/* ===========================
+   DARK MODE
+=========================== */
 
-body.dark input {
-  background: #334155;
-  color: white;
-  border: 1px solid #475569;
-}
+@media (prefers-color-scheme: dark) {
 
-/* TABS */
-.tabs {
-  display: flex;
-  margin-bottom: 20px;
-}
+  body {
+    background: #111827;
+    color: white;
+  }
 
-.tab {
-  flex: 1;
-  padding: 10px;
-  text-align: center;
-  background: var(--card);
-  cursor: pointer;
-  border-radius: 10px;
-  margin-right: 5px;
-}
+  .creditor-card {
+    background: #1f2937;
+    color: white;
+  }
 
-.tab.active {
-  background: var(--primary);
-  color: white;
-}
+  .operation-card {
+    background: #1f2937;
+  }
 
-/* BACK BUTTON */
-.back {
-  margin-bottom: 15px;
-  cursor: pointer;
-  color: var(--primary);
+  .tabs button,
+  .year-filter button {
+    background: #374151;
+    color: white;
+  }
+
+  .tabs button.active,
+  .year-filter button.active {
+    background: #2563eb;
+  }
 }
