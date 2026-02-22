@@ -1,10 +1,6 @@
 let data = {};
 let firebaseUser = null;
 
-// ==============================
-// ATTENTE FIREBASE
-// ==============================
-
 function waitForFirebase() {
   return new Promise((resolve) => {
     const interval = setInterval(() => {
@@ -16,45 +12,33 @@ function waitForFirebase() {
   });
 }
 
-// ==============================
-// INIT FIREBASE
-// ==============================
-
 async function initFirebase() {
 
   const services = await waitForFirebase();
-  const { auth, onAuthStateChanged } = services;
+  const { auth, getRedirectResult, onAuthStateChanged } = services;
+
+  try {
+    await getRedirectResult(auth);
+  } catch (error) {
+    console.log("Redirect error:", error);
+  }
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       firebaseUser = user;
       console.log("Connecté :", user.email);
       await syncFromCloud();
-    } else {
-      console.log("Non connecté");
     }
   });
 }
 
-// ==============================
-// LOGIN POPUP (iOS SAFE)
-// ==============================
-
 async function manualLogin() {
 
   const services = await waitForFirebase();
-  const { auth, provider, signInWithPopup } = services;
+  const { auth, provider, signInWithRedirect } = services;
 
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (error) {
-    console.log("Erreur login :", error);
-  }
+  await signInWithRedirect(auth, provider);
 }
-
-// ==============================
-// CLOUD SYNC
-// ==============================
 
 async function syncFromCloud() {
 
@@ -65,89 +49,42 @@ async function syncFromCloud() {
 
   if (snap.exists()) {
     data = snap.data().data || {};
-    saveLocal();
-  } else {
-    await syncToCloud();
+    localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
   }
 
   renderHome();
 }
 
-async function syncToCloud() {
-
-  if (!firebaseUser) return;
-
-  const services = await waitForFirebase();
-  const { db, doc, setDoc } = services;
-
-  await setDoc(doc(db, "users", firebaseUser.uid), {
-    data: data
-  });
-}
-
-// ==============================
-// LOCAL STORAGE
-// ==============================
-
-function saveLocal() {
-  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
-}
-
-function loadLocal() {
-  const saved = localStorage.getItem("SUIVI_DETTES_DATA");
-  return saved ? JSON.parse(saved) : {};
-}
-
-// ==============================
-// RENDER HOME
-// ==============================
-
 function renderHome() {
 
   const list = document.getElementById("creditorList");
-  if (!list) return;
-
   list.innerHTML = "";
+
+  const saved = localStorage.getItem("SUIVI_DETTES_DATA");
+  if (saved) data = JSON.parse(saved);
 
   let total = 0;
 
   Object.keys(data).forEach(name => {
-
     const ops = data[name].operations || [];
-
-    const dette = ops
-      .filter(o => o.type === "dette")
+    const dette = ops.filter(o => o.type === "dette")
       .reduce((s, o) => s + o.montant, 0);
-
-    const remb = ops
-      .filter(o => o.type === "remboursement")
+    const remb = ops.filter(o => o.type === "remboursement")
       .reduce((s, o) => s + o.montant, 0);
 
     const solde = dette - remb;
     total += solde;
 
     const card = document.createElement("div");
-    card.className = "creditor-card";
-    card.innerHTML = `
-      <h3>${name}</h3>
-      <div>${solde.toFixed(2)} €</div>
-    `;
-
+    card.innerHTML = `<h3>${name}</h3><div>${solde.toFixed(2)} €</div>`;
     list.appendChild(card);
   });
 
-  const totalDiv = document.getElementById("totalGlobal");
-  if (totalDiv) {
-    totalDiv.innerText = total.toFixed(2) + " €";
-  }
+  document.getElementById("totalGlobal").innerText =
+    total.toFixed(2) + " €";
 }
 
-// ==============================
-// INIT APP
-// ==============================
-
 document.addEventListener("DOMContentLoaded", async () => {
-  data = loadLocal();
   renderHome();
   await initFirebase();
 });
