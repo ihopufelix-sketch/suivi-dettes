@@ -1,20 +1,38 @@
+// ==============================
+// VARIABLES GLOBALES
+// ==============================
+
 let data = {};
-let currentCreditor = null;
-let currentTab = "dette";
-let selectedYear = "all";
 let firebaseUser = null;
 
 // ==============================
-// FIREBASE INIT PROPRE
+// ATTENDRE FIREBASE
+// ==============================
+
+function waitForFirebase() {
+  return new Promise((resolve) => {
+    const interval = setInterval(() => {
+      if (window.firebaseServices) {
+        clearInterval(interval);
+        resolve(window.firebaseServices);
+      }
+    }, 50);
+  });
+}
+
+// ==============================
+// INIT FIREBASE PROPRE
 // ==============================
 
 async function initFirebase() {
+
+  const services = await waitForFirebase();
 
   const {
     auth,
     onAuthStateChanged,
     getRedirectResult
-  } = window.firebaseServices;
+  } = services;
 
   try {
     await getRedirectResult(auth);
@@ -25,25 +43,45 @@ async function initFirebase() {
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       firebaseUser = user;
-      console.log("Connecté :", user.email);
+      console.log("Utilisateur connecté :", user.email);
       await syncFromCloud();
     } else {
-      console.log("Non connecté");
+      console.log("Aucun utilisateur connecté");
     }
   });
 }
 
+// ==============================
+// LOGIN MANUEL
+// ==============================
+
 async function manualLogin() {
-  const { auth, provider, signInWithRedirect } = window.firebaseServices;
-  await signInWithRedirect(auth, provider);
+
+  alert("Connexion déclenchée"); // TEST SAFARI
+
+  const services = await waitForFirebase();
+
+  const {
+    auth,
+    provider,
+    signInWithRedirect
+  } = services;
+
+  try {
+    await signInWithRedirect(auth, provider);
+  } catch (error) {
+    console.log("Erreur login :", error);
+  }
 }
 
 // ==============================
-// CLOUD SYNC
+// SYNC CLOUD
 // ==============================
 
 async function syncFromCloud() {
-  const { db, doc, getDoc } = window.firebaseServices;
+
+  const services = await waitForFirebase();
+  const { db, doc, getDoc } = services;
 
   const snap = await getDoc(doc(db, "users", firebaseUser.uid));
 
@@ -58,9 +96,11 @@ async function syncFromCloud() {
 }
 
 async function syncToCloud() {
+
   if (!firebaseUser) return;
 
-  const { db, doc, setDoc } = window.firebaseServices;
+  const services = await waitForFirebase();
+  const { db, doc, setDoc } = services;
 
   await setDoc(doc(db, "users", firebaseUser.uid), {
     data: data
@@ -80,48 +120,48 @@ function loadLocal() {
   return saved ? JSON.parse(saved) : {};
 }
 
-async function saveAll() {
-  saveLocal();
-  await syncToCloud();
-}
-
 // ==============================
-// RENDER HOME
+// RENDER HOME SIMPLE
 // ==============================
 
 function renderHome() {
+
   const list = document.getElementById("creditorList");
+  if (!list) return;
+
   list.innerHTML = "";
 
-  let totalGlobal = 0;
+  let total = 0;
 
   Object.keys(data).forEach(name => {
 
     const ops = data[name].operations || [];
 
-    const dette = ops.filter(o => o.type === "dette")
+    const dette = ops
+      .filter(o => o.type === "dette")
       .reduce((s, o) => s + o.montant, 0);
 
-    const remb = ops.filter(o => o.type === "remboursement")
+    const remb = ops
+      .filter(o => o.type === "remboursement")
       .reduce((s, o) => s + o.montant, 0);
 
     const solde = dette - remb;
-    totalGlobal += solde;
+    total += solde;
 
     const card = document.createElement("div");
     card.className = "creditor-card";
-
     card.innerHTML = `
       <h3>${name}</h3>
-      <div class="amount">${solde.toFixed(2)} €</div>
+      <div>${solde.toFixed(2)} €</div>
     `;
 
-    card.onclick = () => openDetail(name);
     list.appendChild(card);
   });
 
-  document.getElementById("totalGlobal").innerText =
-    `${totalGlobal.toFixed(2)} €`;
+  const totalDiv = document.getElementById("totalGlobal");
+  if (totalDiv) {
+    totalDiv.innerText = total.toFixed(2) + " €";
+  }
 }
 
 // ==============================
@@ -129,7 +169,9 @@ function renderHome() {
 // ==============================
 
 document.addEventListener("DOMContentLoaded", async () => {
+
   data = loadLocal();
   renderHome();
+
   await initFirebase();
 });
