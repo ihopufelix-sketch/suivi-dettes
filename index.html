@@ -47,11 +47,21 @@
 
   </div>
 
-  <!-- 🔥 FIREBASE -->
+  <!-- 🔥 FIREBASE COMPLET -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    import { 
+      getAuth, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc 
+    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBeLxClxRO87cr-RXPXgIgbX22NK8EUJiE",
@@ -67,7 +77,16 @@
     const provider = new GoogleAuthProvider();
     const db = getFirestore(app);
 
-    window.firebaseServices = { auth, provider, db };
+    window.firebaseServices = { 
+      auth, 
+      provider, 
+      signInWithPopup, 
+      onAuthStateChanged,
+      db, 
+      doc, 
+      getDoc, 
+      setDoc 
+    };
   </script>
 
   <!-- TON APP -->
