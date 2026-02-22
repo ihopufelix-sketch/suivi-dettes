@@ -47,13 +47,14 @@
 
   </div>
 
-  <!-- 🔥 FIREBASE VERSION SAFARI -->
+  <!-- 🔥 FIREBASE VERSION SAFARI DEFINITIVE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { 
       getAuth, 
       GoogleAuthProvider, 
       signInWithRedirect, 
+      getRedirectResult,
       onAuthStateChanged 
     } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
     import { 
@@ -81,6 +82,7 @@
       auth, 
       provider, 
       signInWithRedirect, 
+      getRedirectResult,
       onAuthStateChanged,
       db, 
       doc, 
