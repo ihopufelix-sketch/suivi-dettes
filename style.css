@@ -1,214 +1,235 @@
-/* ===========================
-   BASE
-=========================== */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-}
+/* ============================= */
+/* GLOBAL */
+/* ============================= */
 
 body {
-  background: #f4f6fa;
-  color: #111827;
-  padding: 20px;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(180deg, #0b132b 0%, #0f1c3d 100%);
+  color: #ffffff;
 }
-
-/* ===========================
-   HEADER
-=========================== */
-
-.header {
-  margin-bottom: 20px;
-}
-
-.header h1 {
-  font-size: 22px;
-  margin-bottom: 10px;
-}
-
-.total-global {
-  font-size: 32px;
-  font-weight: bold;
-  background: #111827;
-  color: white;
-  padding: 20px;
-  border-radius: 16px;
-  text-align: center;
-}
-
-/* ===========================
-   ACTION BUTTONS
-=========================== */
-
-.actions {
-  margin: 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-button {
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.actions button:nth-child(1) {
-  background: #2563eb;
-  color: white;
-}
-
-.actions button:nth-child(2) {
-  background: #10b981;
-  color: white;
-}
-
-.actions button:nth-child(3) {
-  background: #f59e0b;
-  color: white;
-}
-
-/* ===========================
-   CREDITOR CARDS
-=========================== */
-
-.creditor-card {
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  cursor: pointer;
-}
-
-.creditor-card h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.creditor-card .amount {
-  font-size: 22px;
-  font-weight: bold;
-}
-
-/* ===========================
-   DETAIL VIEW
-=========================== */
 
 .hidden {
   display: none;
 }
 
-#detailView {
-  margin-top: 20px;
+h1, h2, h3 {
+  margin: 0;
 }
 
-#detailTitle {
+/* ============================= */
+/* CONTAINER */
+/* ============================= */
+
+.container {
+  padding: 24px;
+  max-width: 600px;
+  margin: auto;
+}
+
+/* ============================= */
+/* TITRE + TOTAL */
+/* ============================= */
+
+#totalGlobal {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 20px 0 30px 0;
+  text-align: center;
+}
+
+/* ============================= */
+/* BOUTONS PRINCIPAUX */
+/* ============================= */
+
+button {
+  border: none;
+  border-radius: 18px;
+  padding: 18px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #1e40af;
+}
+
+.btn-success {
+  background: #059669;
+  color: #ffffff;
+}
+
+.btn-warning {
+  background: #d97706;
+  color: #ffffff;
+}
+
+/* ============================= */
+/* CARTES CREANCIERS */
+/* ============================= */
+
+.creditor-card {
+  background: #1e293b;
+  padding: 22px;
+  border-radius: 22px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: 0.2s ease;
+}
+
+.creditor-card:hover {
+  background: #273449;
+}
+
+.creditor-card h3 {
   font-size: 20px;
-  margin: 10px 0;
+  margin-bottom: 8px;
+}
+
+.creditor-card .amount {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+/* ============================= */
+/* DETAIL HEADER */
+/* ============================= */
+
+#detailTitle {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 10px;
 }
 
 #detailTotals {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   font-weight: 600;
+  color: #cbd5e1;
 }
 
-/* ===========================
-   YEAR FILTER
-=========================== */
+/* ============================= */
+/* FILTRE ANNÉE */
+/* ============================= */
 
-.year-filter {
+#yearFilter {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
-.year-filter button {
-  background: #e5e7eb;
-  color: #111827;
-  padding: 8px 14px;
-  border-radius: 20px;
+#yearFilter button {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-radius: 14px;
   font-size: 14px;
+  background: #334155;
+  color: #ffffff;
 }
 
-.year-filter button.active {
-  background: #2563eb;
-  color: white;
+#yearFilter button.active {
+  background: #1e40af;
+  font-weight: 800;
 }
 
-/* ===========================
-   TABS
-=========================== */
+/* ============================= */
+/* ONGLET DETTE / REMB */
+/* ============================= */
 
 .tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .tabs button {
   flex: 1;
-  background: #e5e7eb;
+  background: #334155;
+  color: #ffffff;
+  font-size: 18px;
+  border-radius: 18px;
+  padding: 16px;
 }
 
 .tabs button.active {
-  background: #2563eb;
-  color: white;
+  background: #1e40af;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
-/* ===========================
-   OPERATIONS
-=========================== */
+/* ============================= */
+/* AJOUT OPERATION */
+/* ============================= */
+
+#addOperationBtn {
+  background: #475569;
+  color: #ffffff;
+}
+
+/* ============================= */
+/* CARTES OPERATIONS */
+/* ============================= */
 
 .operation-card {
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  background: #f9fafb;
+  padding: 20px;
+  border-radius: 22px;
+  margin-bottom: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
 }
+
+/* Dettes = rouge profond */
 
 .operation-card.dette {
-  background: #fee2e2;
+  background: #7f1d1d;
 }
+
+/* Remboursement = vert profond */
 
 .operation-card.remboursement {
-  background: #dcfce7;
+  background: #14532d;
 }
 
-/* ===========================
-   DARK MODE
-=========================== */
+/* ============================= */
+/* BOUTON RETOUR */
+/* ============================= */
 
-@media (prefers-color-scheme: dark) {
+#backBtn {
+  background: #475569;
+  margin-bottom: 20px;
+}
 
-  body {
-    background: #111827;
-    color: white;
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 480px) {
+  .container {
+    padding: 18px;
   }
 
-  .creditor-card {
-    background: #1f2937;
-    color: white;
+  #totalGlobal {
+    font-size: 36px;
   }
 
-  .operation-card {
-    background: #1f2937;
-  }
-
-  .tabs button,
-  .year-filter button {
-    background: #374151;
-    color: white;
-  }
-
-  .tabs button.active,
-  .year-filter button.active {
-    background: #2563eb;
+  button {
+    font-size: 16px;
+    padding: 16px;
   }
 }
