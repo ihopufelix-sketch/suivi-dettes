@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Suivi Dettes</title>
+  <title>Suivi des dettes</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
@@ -13,62 +13,22 @@
 <body>
 
   <div id="app">
+
     <header class="header">
       <h1>Suivi des dettes</h1>
-      <div id="totalGlobal"></div>
+      <div id="totalGlobal">0.00 €</div>
     </header>
 
     <section class="actions">
-      <button onclick="manualLogin()">Se connecter</button>
+      <button id="loginBtn">Se connecter</button>
     </section>
 
     <section id="creditorList"></section>
+
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithRedirect,
-      getRedirectResult,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBeLxClxRO87cr-RXPXgIgbX22NK8EUJiE",
-      authDomain: "suivi-dettes-36682.firebaseapp.com",
-      projectId: "suivi-dettes-36682",
-      storageBucket: "suivi-dettes-36682.firebasestorage.app",
-      messagingSenderId: "758921362645",
-      appId: "1:758921362645:web:12ee45f6061e46b38cf65c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const db = getFirestore(app);
-
-    window.firebaseServices = {
-      auth,
-      provider,
-      signInWithRedirect,
-      getRedirectResult,
-      onAuthStateChanged,
-      db,
-      doc,
-      getDoc,
-      setDoc
-    };
-  </script>
-
-  <script src="app.js"></script>
+  <!-- APP -->
+  <script type="module" src="app.js"></script>
 
 </body>
 </html>
