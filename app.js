@@ -1,5 +1,5 @@
 // ============================================
-// FIREBASE IMPORTS (MODULE VERSION)
+// FIREBASE IMPORTS
 // ============================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -13,7 +13,8 @@ import {
 
 
 // ============================================
-// ⚠️ REMPLACE ICI PAR TA VRAIE CONFIG FIREBASE
+// 🔥 REMPLACE PAR TA VRAIE CONFIG FIREBASE
+// (Firebase Console → Paramètres → SDK Web)
 // ============================================
 
 const firebaseConfig = {
@@ -36,20 +37,17 @@ const provider = new GoogleAuthProvider();
 
 
 // ============================================
-// LOGIN BUTTON
+// LOGIN
 // ============================================
 
 async function manualLogin() {
   try {
-    console.log("Déclenchement redirection Google");
     await signInWithRedirect(auth, provider);
   } catch (error) {
-    console.error("Erreur login:", error);
-    alert("Erreur login : " + error.message);
+    console.error("Erreur login :", error);
+    alert(error.message);
   }
 }
-
-window.manualLogin = manualLogin;
 
 
 // ============================================
@@ -61,11 +59,12 @@ async function handleRedirect() {
     const result = await getRedirectResult(auth);
 
     if (result && result.user) {
-      console.log("Connexion réussie :", result.user.email);
+      console.log("Connecté :", result.user.email);
       alert("Connexion réussie ✅");
     }
+
   } catch (error) {
-    console.error("Erreur redirect:", error);
+    console.error("Erreur redirect :", error);
   }
 }
 
@@ -84,9 +83,53 @@ onAuthStateChanged(auth, (user) => {
 
 
 // ============================================
-// INIT
+// RENDER SIMPLE (POUR NE RIEN CASSER)
+// ============================================
+
+function renderHome() {
+
+  const saved = localStorage.getItem("SUIVI_DETTES_DATA");
+  let data = saved ? JSON.parse(saved) : {};
+
+  let total = 0;
+  const list = document.getElementById("creditorList");
+  list.innerHTML = "";
+
+  Object.keys(data).forEach(name => {
+
+    const ops = data[name].operations || [];
+
+    const dette = ops
+      .filter(o => o.type === "dette")
+      .reduce((s, o) => s + o.montant, 0);
+
+    const remb = ops
+      .filter(o => o.type === "remboursement")
+      .reduce((s, o) => s + o.montant, 0);
+
+    const solde = dette - remb;
+    total += solde;
+
+    const card = document.createElement("div");
+    card.innerHTML = `<h3>${name}</h3><div>${solde.toFixed(2)} €</div>`;
+    list.appendChild(card);
+  });
+
+  document.getElementById("totalGlobal").innerText =
+    total.toFixed(2) + " €";
+}
+
+
+// ============================================
+// INIT GLOBAL
 // ============================================
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+  renderHome();
+
+  document.getElementById("loginBtn")
+    .addEventListener("click", manualLogin);
+
   await handleRedirect();
 });
