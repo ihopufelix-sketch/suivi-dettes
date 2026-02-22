@@ -7,12 +7,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ===============================
-// CONFIGURATION FIREBASE
+// CONFIG FIREBASE
 // ===============================
 
 const firebaseConfig = {
@@ -29,7 +28,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 // ===============================
-// LOGIN VIA POPUP
+// LOGIN FUNCTION
 // ===============================
 
 async function manualLogin() {
@@ -42,10 +41,22 @@ async function manualLogin() {
   }
 }
 
-window.manualLogin = manualLogin;
+// ===============================
+// DOM READY
+// ===============================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const loginBtn = document.getElementById("loginBtn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", manualLogin);
+  }
+
+});
 
 // ===============================
-// OBSERVATEUR AUTH
+// AUTH STATE
 // ===============================
 
 onAuthStateChanged(auth, (user) => {
