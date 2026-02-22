@@ -1,12 +1,8 @@
-// ==============================
-// VARIABLES GLOBALES
-// ==============================
-
 let data = {};
 let firebaseUser = null;
 
 // ==============================
-// ATTENDRE FIREBASE
+// ATTENTE FIREBASE
 // ==============================
 
 function waitForFirebase() {
@@ -21,61 +17,43 @@ function waitForFirebase() {
 }
 
 // ==============================
-// INIT FIREBASE PROPRE
+// INIT FIREBASE
 // ==============================
 
 async function initFirebase() {
 
   const services = await waitForFirebase();
-
-  const {
-    auth,
-    onAuthStateChanged,
-    getRedirectResult
-  } = services;
-
-  try {
-    await getRedirectResult(auth);
-  } catch (error) {
-    console.log("Redirect error:", error);
-  }
+  const { auth, onAuthStateChanged } = services;
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       firebaseUser = user;
-      console.log("Utilisateur connecté :", user.email);
+      console.log("Connecté :", user.email);
       await syncFromCloud();
     } else {
-      console.log("Aucun utilisateur connecté");
+      console.log("Non connecté");
     }
   });
 }
 
 // ==============================
-// LOGIN MANUEL
+// LOGIN POPUP (iOS SAFE)
 // ==============================
 
 async function manualLogin() {
 
-  alert("Connexion déclenchée"); // TEST SAFARI
-
   const services = await waitForFirebase();
-
-  const {
-    auth,
-    provider,
-    signInWithRedirect
-  } = services;
+  const { auth, provider, signInWithPopup } = services;
 
   try {
-    await signInWithRedirect(auth, provider);
+    await signInWithPopup(auth, provider);
   } catch (error) {
     console.log("Erreur login :", error);
   }
 }
 
 // ==============================
-// SYNC CLOUD
+// CLOUD SYNC
 // ==============================
 
 async function syncFromCloud() {
@@ -121,7 +99,7 @@ function loadLocal() {
 }
 
 // ==============================
-// RENDER HOME SIMPLE
+// RENDER HOME
 // ==============================
 
 function renderHome() {
@@ -165,13 +143,11 @@ function renderHome() {
 }
 
 // ==============================
-// INIT
+// INIT APP
 // ==============================
 
 document.addEventListener("DOMContentLoaded", async () => {
-
   data = loadLocal();
   renderHome();
-
   await initFirebase();
 });
