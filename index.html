@@ -7,7 +7,6 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-
   <meta name="theme-color" content="#111827">
 </head>
 
@@ -48,6 +47,30 @@
 
   </div>
 
+  <!-- 🔥 FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBeLxClxRO87cr-RXPXgIgbX22NK8EUJiE",
+      authDomain: "suivi-dettes-36682.firebaseapp.com",
+      projectId: "suivi-dettes-36682",
+      storageBucket: "suivi-dettes-36682.firebasestorage.app",
+      messagingSenderId: "758921362645",
+      appId: "1:758921362645:web:12ee45f6061e46b38cf65c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    const db = getFirestore(app);
+
+    window.firebaseServices = { auth, provider, db };
+  </script>
+
+  <!-- TON APP -->
   <script src="app.js"></script>
 
 </body>
