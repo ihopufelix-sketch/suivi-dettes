@@ -39,21 +39,15 @@ function addLongPress(element, callback) {
     timer = setTimeout(callback, 700);
   });
 
-  element.addEventListener("touchend", () => {
-    clearTimeout(timer);
-  });
+  element.addEventListener("touchend", () => clearTimeout(timer));
+  element.addEventListener("touchcancel", () => clearTimeout(timer));
 
   element.addEventListener("mousedown", () => {
     timer = setTimeout(callback, 700);
   });
 
-  element.addEventListener("mouseup", () => {
-    clearTimeout(timer);
-  });
-
-  element.addEventListener("mouseleave", () => {
-    clearTimeout(timer);
-  });
+  element.addEventListener("mouseup", () => clearTimeout(timer));
+  element.addEventListener("mouseleave", () => clearTimeout(timer));
 }
 
 // ==============================
@@ -240,19 +234,29 @@ function addCreditor() {
 }
 
 function addOperation() {
+
   const label = prompt("Label ?");
   if (!label) return;
 
   const montant = parseFloat(prompt("Montant ?"));
   if (isNaN(montant)) return;
 
-  const date = formatDate(new Date());
+  const today = formatDate(new Date());
+  let dateInput = prompt("Date (JJ/MM/AAAA)", today);
+
+  if (!dateInput) return;
+
+  const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+  if (!regex.test(dateInput)) {
+    alert("Format invalide. Utilise JJ/MM/AAAA");
+    return;
+  }
 
   data[currentCreditor].operations.push({
     type: currentTab,
     label,
     montant,
-    date
+    date: dateInput
   });
 
   saveData();
