@@ -1,5 +1,5 @@
 // ==============================
-// INITIALISATION PROPRE
+// INITIALISATION
 // ==============================
 
 let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA")) || {};
@@ -65,19 +65,6 @@ function renderHome() {
 
     card.onclick = () => openDetail(name);
 
-    card.oncontextmenu = (e) => {
-      e.preventDefault();
-      if (solde !== 0) {
-        alert("Solde ≠ 0 €");
-        return;
-      }
-      if (confirm("Supprimer créancier ?")) {
-        delete data[name];
-        saveData();
-        renderHome();
-      }
-    };
-
     list.appendChild(card);
   });
 
@@ -92,6 +79,7 @@ function renderHome() {
 function openDetail(name) {
   currentCreditor = name;
   selectedYear = "all";
+  currentTab = "dette";
 
   document.getElementById("creditorList").classList.add("hidden");
   document.getElementById("detailView").classList.remove("hidden");
@@ -162,9 +150,10 @@ function renderDetail() {
         <div>${op.type==="dette" ? "+" : "-"} ${op.montant.toFixed(2)} €</div>
       `;
 
-      card.oncontextmenu = (e) => {
-        e.preventDefault();
-        if (confirm("Supprimer opération ?")) {
+      // 🔥 Suppression par double-tap
+      card.addEventListener("dblclick", () => {
+        if (confirm("Supprimer cette opération ?")) {
+
           data[currentCreditor].operations =
             data[currentCreditor].operations.filter(o =>
               !(o.date === op.date &&
@@ -172,13 +161,24 @@ function renderDetail() {
                 o.montant === op.montant &&
                 o.type === op.type)
             );
+
           saveData();
           renderDetail();
         }
-      };
+      });
 
       list.appendChild(card);
     });
+}
+
+function setTab(type) {
+  currentTab = type;
+  renderDetail();
+}
+
+function backToHome() {
+  currentCreditor = null;
+  renderHome();
 }
 
 // ==============================
@@ -247,7 +247,5 @@ function importBackup() {
 
   input.click();
 }
-
-// ==============================
 
 renderHome();
