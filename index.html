@@ -48,21 +48,21 @@
 
   </div>
 
-  <!-- 🔥 FIREBASE MODULE COMPLET SAFARI -->
+  <!-- 🔥 FIREBASE CONFIG COMPLET -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { 
-      getAuth, 
-      GoogleAuthProvider, 
-      signInWithRedirect, 
-      getRedirectResult,
-      onAuthStateChanged 
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithRedirect,
+      onAuthStateChanged,
+      getRedirectResult
     } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      getDoc, 
-      setDoc 
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -79,20 +79,19 @@
     const provider = new GoogleAuthProvider();
     const db = getFirestore(app);
 
-    window.firebaseServices = { 
-      auth, 
-      provider, 
-      signInWithRedirect, 
-      getRedirectResult,
+    window.firebaseServices = {
+      auth,
+      provider,
+      signInWithRedirect,
       onAuthStateChanged,
-      db, 
-      doc, 
-      getDoc, 
-      setDoc 
+      getRedirectResult,
+      db,
+      doc,
+      getDoc,
+      setDoc
     };
   </script>
 
-  <!-- TON APP -->
   <script src="app.js"></script>
 
 </body>
