@@ -9,11 +9,16 @@ let selectedYear = "all";
 let firebaseUser = null;
 
 // ==============================
-// FIREBASE INIT
+// FIREBASE INIT (SAFARI SAFE)
 // ==============================
 
 function initFirebase() {
-  const { auth, provider, signInWithPopup, onAuthStateChanged } = window.firebaseServices;
+  const { 
+    auth, 
+    provider, 
+    signInWithRedirect, 
+    onAuthStateChanged 
+  } = window.firebaseServices;
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -21,11 +26,9 @@ function initFirebase() {
       await syncFromCloud();
     } else {
       try {
-        const result = await signInWithPopup(auth, provider);
-        firebaseUser = result.user;
-        await syncFromCloud();
+        await signInWithRedirect(auth, provider);
       } catch (e) {
-        console.log("Connexion annulée");
+        console.log("Erreur redirection :", e);
       }
     }
   });
