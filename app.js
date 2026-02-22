@@ -29,6 +29,34 @@ function formatDate(dateObj) {
 }
 
 // ==============================
+// LONG PRESS HANDLER
+// ==============================
+
+function addLongPress(element, callback) {
+  let timer = null;
+
+  element.addEventListener("touchstart", () => {
+    timer = setTimeout(callback, 700);
+  });
+
+  element.addEventListener("touchend", () => {
+    clearTimeout(timer);
+  });
+
+  element.addEventListener("mousedown", () => {
+    timer = setTimeout(callback, 700);
+  });
+
+  element.addEventListener("mouseup", () => {
+    clearTimeout(timer);
+  });
+
+  element.addEventListener("mouseleave", () => {
+    clearTimeout(timer);
+  });
+}
+
+// ==============================
 // HOME
 // ==============================
 
@@ -64,6 +92,22 @@ function renderHome() {
     `;
 
     card.onclick = () => openDetail(name);
+
+    // 🔥 Suppression créancier par appui long
+    addLongPress(card, () => {
+
+      if (solde !== 0) {
+        alert("Impossible de supprimer : solde ≠ 0 €");
+        return;
+      }
+
+      if (confirm("Supprimer ce créancier ?")) {
+        delete data[name];
+        saveData();
+        renderHome();
+      }
+
+    });
 
     list.appendChild(card);
   });
@@ -150,8 +194,9 @@ function renderDetail() {
         <div>${op.type==="dette" ? "+" : "-"} ${op.montant.toFixed(2)} €</div>
       `;
 
-      // 🔥 Suppression par double-tap
-      card.addEventListener("dblclick", () => {
+      // 🔥 Suppression opération par appui long
+      addLongPress(card, () => {
+
         if (confirm("Supprimer cette opération ?")) {
 
           data[currentCreditor].operations =
@@ -165,6 +210,7 @@ function renderDetail() {
           saveData();
           renderDetail();
         }
+
       });
 
       list.appendChild(card);
