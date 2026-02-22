@@ -1,22 +1,15 @@
 // ==============================
-// INITIALISATION
+// INITIAL DATA (HISTORIQUE COMPLET)
 // ==============================
 
-// 🔥 HISTORIQUE OFFICIEL INJECTÉ
 const INITIAL_DATA = {
-  Laurine: { operations: [] },
-  Alex: { operations: [] },
-  "Anne-Sophie": { operations: [] },
-  Famille: { operations: [] }
+  /* === COLLE ICI LE JSON COMPLET QUE JE T’AI DONNÉ === */
 };
 
-// ⚠️ On charge le localStorage.
-// Si vide → on injecte INITIAL_DATA
-let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA"));
+let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA")) || INITIAL_DATA;
 
-if (!data) {
-  data = INITIAL_DATA;
-  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
+if (!localStorage.getItem("SUIVI_DETTES_DATA")) {
+  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(INITIAL_DATA));
 }
 
 let currentCreditor = null;
@@ -59,15 +52,8 @@ function renderHome() {
 
   Object.keys(data).forEach(name => {
     const ops = data[name].operations;
-
-    const dette = ops
-      .filter(o => o.type === "dette")
-      .reduce((s, o) => s + o.montant, 0);
-
-    const remb = ops
-      .filter(o => o.type === "remboursement")
-      .reduce((s, o) => s + o.montant, 0);
-
+    const dette = ops.filter(o => o.type === "dette").reduce((s, o) => s + o.montant, 0);
+    const remb = ops.filter(o => o.type === "remboursement").reduce((s, o) => s + o.montant, 0);
     const solde = dette - remb;
 
     totalGlobal += solde;
@@ -96,8 +82,7 @@ function renderHome() {
     list.appendChild(card);
   });
 
-  document.getElementById("totalGlobal").innerText =
-    `${totalGlobal.toFixed(2)} €`;
+  document.getElementById("totalGlobal").innerText = `${totalGlobal.toFixed(2)} €`;
 }
 
 // ==============================
@@ -159,16 +144,13 @@ function renderDetail() {
   document.getElementById("detailTotals").innerText =
     `Total dettes : ${totalDette.toFixed(2)} € | Solde : ${(totalDette-totalRemb).toFixed(2)} €`;
 
-  document.getElementById("tabDette")
-    .classList.toggle("active", currentTab==="dette");
-  document.getElementById("tabRemb")
-    .classList.toggle("active", currentTab==="remboursement");
+  document.getElementById("tabDette").classList.toggle("active", currentTab==="dette");
+  document.getElementById("tabRemb").classList.toggle("active", currentTab==="remboursement");
 
   const list = document.getElementById("operationList");
   list.innerHTML = "";
 
   const displayList = currentTab === "dette" ? dettes : rembs;
-
   displayList.sort((a,b)=>convertDate(b.date)-convertDate(a.date));
 
   displayList.forEach(op => {
@@ -240,10 +222,7 @@ function addOperation() {
 // ==============================
 
 function exportBackup() {
-  const blob = new Blob(
-    [JSON.stringify(data, null, 2)],
-    { type: "application/json" }
-  );
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
