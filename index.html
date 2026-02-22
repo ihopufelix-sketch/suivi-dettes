@@ -13,31 +13,25 @@
 <body>
 
   <div id="app">
-
     <header class="header">
       <h1>Suivi des dettes</h1>
-      <div id="totalGlobal" class="total-global"></div>
+      <div id="totalGlobal"></div>
     </header>
 
     <section class="actions">
       <button onclick="manualLogin()">Se connecter</button>
-      <button onclick="addCreditor()">+ Ajouter créancier</button>
-      <button onclick="exportBackup()">Export Backup</button>
-      <button onclick="importBackup()">Import Backup</button>
-      <input type="file" id="fileInput" hidden>
     </section>
 
     <section id="creditorList"></section>
-
   </div>
 
-  <!-- FIREBASE CONFIG -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import {
       getAuth,
       GoogleAuthProvider,
-      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
     import {
@@ -64,7 +58,8 @@
     window.firebaseServices = {
       auth,
       provider,
-      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       onAuthStateChanged,
       db,
       doc,
