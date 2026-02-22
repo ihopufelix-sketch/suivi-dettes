@@ -306,3 +306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderHome();
   await initFirebase();
 });
+async function manualLogin() {
+  const { auth, provider, signInWithRedirect } = window.firebaseServices;
+  await signInWithRedirect(auth, provider);
+}
