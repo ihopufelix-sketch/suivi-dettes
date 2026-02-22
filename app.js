@@ -9,7 +9,7 @@ let selectedYear = "all";
 let firebaseUser = null;
 
 // ==============================
-// FIREBASE INIT (SAFARI FINAL)
+// FIREBASE INIT (ROBUST SAFARI)
 // ==============================
 
 async function initFirebase() {
@@ -29,15 +29,19 @@ async function initFirebase() {
       return;
     }
   } catch (e) {
-    console.log("Erreur redirect result :", e);
+    console.log("Redirect result error:", e);
+  }
+
+  if (!auth.currentUser) {
+    console.log("Aucun utilisateur → redirection forcée");
+    await signInWithRedirect(auth, provider);
+    return;
   }
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       firebaseUser = user;
       await syncFromCloud();
-    } else {
-      await signInWithRedirect(auth, provider);
     }
   });
 }
@@ -107,9 +111,11 @@ function formatDate(dateObj) {
 
 function addLongPress(element, callback) {
   let timer;
+
   element.addEventListener("touchstart", () => {
     timer = setTimeout(callback, 700);
   });
+
   element.addEventListener("touchend", () => clearTimeout(timer));
   element.addEventListener("mousedown", () => {
     timer = setTimeout(callback, 700);
@@ -125,9 +131,11 @@ function addLongPress(element, callback) {
 function renderHome() {
   const list = document.getElementById("creditorList");
   list.innerHTML = "";
+
   let totalGlobal = 0;
 
   Object.keys(data).forEach(name => {
+
     const ops = data[name].operations || [];
 
     const dette = ops.filter(o => o.type === "dette")
@@ -141,6 +149,7 @@ function renderHome() {
 
     const card = document.createElement("div");
     card.className = "creditor-card";
+
     card.innerHTML = `
       <h3>${name}</h3>
       <div class="amount">${solde.toFixed(2)} €</div>
@@ -149,7 +158,10 @@ function renderHome() {
     card.onclick = () => openDetail(name);
 
     addLongPress(card, async () => {
-      if (solde !== 0) return;
+      if (solde !== 0) {
+        alert("Impossible de supprimer : solde ≠ 0 €");
+        return;
+      }
       if (confirm("Supprimer ce créancier ?")) {
         delete data[name];
         await saveAll();
@@ -182,6 +194,7 @@ function openDetail(name) {
 
 function renderDetail() {
   const ops = data[currentCreditor].operations || [];
+
   const list = document.getElementById("operationList");
   list.innerHTML = "";
 
@@ -191,6 +204,7 @@ function renderDetail() {
 
       const card = document.createElement("div");
       card.className = `operation-card ${op.type}`;
+
       card.innerHTML = `
         <div>${op.date}</div>
         <div>${op.label}</div>
@@ -200,7 +214,12 @@ function renderDetail() {
       addLongPress(card, async () => {
         if (confirm("Supprimer cette opération ?")) {
           data[currentCreditor].operations =
-            data[currentCreditor].operations.filter(o => o !== op);
+            data[currentCreditor].operations.filter(o =>
+              !(o.date === op.date &&
+                o.label === op.label &&
+                o.montant === op.montant &&
+                o.type === op.type)
+            );
           await saveAll();
           renderDetail();
         }
@@ -241,6 +260,41 @@ async function addOperation() {
 
   await saveAll();
   renderDetail();
+}
+
+// ==============================
+// BACKUP MANUEL
+// ==============================
+
+function exportBackup() {
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: "application/json" }
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "backup_dettes.json";
+  a.click();
+}
+
+function importBackup() {
+  const input = document.getElementById("fileInput");
+
+  input.onchange = async e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async function(event) {
+      data = JSON.parse(event.target.result);
+      await saveAll();
+      renderHome();
+    };
+
+    reader.readAsText(file);
+  };
+
+  input.click();
 }
 
 // ==============================
