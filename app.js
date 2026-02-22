@@ -1,20 +1,90 @@
 // ==============================
-// INITIALISATION
+// VARIABLES GLOBALES
 // ==============================
 
-let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA")) || {};
-
+let data = {};
 let currentCreditor = null;
 let currentTab = "dette";
 let selectedYear = "all";
+let firebaseUser = null;
+
+// ==============================
+// FIREBASE INIT
+// ==============================
+
+function initFirebase() {
+  const { auth, provider, signInWithPopup, onAuthStateChanged } = window.firebaseServices;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      firebaseUser = user;
+      await syncFromCloud();
+    } else {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        firebaseUser = result.user;
+        await syncFromCloud();
+      } catch (e) {
+        console.log("Connexion annulée");
+      }
+    }
+  });
+}
+
+// ==============================
+// SYNC CLOUD
+// ==============================
+
+async function syncFromCloud() {
+  const { db, doc, getDoc } = window.firebaseServices;
+
+  const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+
+  if (snap.exists()) {
+    data = snap.data().data || {};
+    saveLocal();
+  } else {
+    await syncToCloud();
+  }
+
+  renderHome();
+}
+
+async function syncToCloud() {
+  if (!firebaseUser) return;
+
+  const { db, doc, setDoc } = window.firebaseServices;
+
+  await setDoc(doc(db, "users", firebaseUser.uid), {
+    data: data
+  });
+}
+
+// ==============================
+// LOCAL STORAGE (SECURITE)
+// ==============================
+
+function saveLocal() {
+  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
+}
+
+function loadLocal() {
+  const saved = localStorage.getItem("SUIVI_DETTES_DATA");
+  return saved ? JSON.parse(saved) : {};
+}
+
+// ==============================
+// SAVE GLOBAL
+// ==============================
+
+async function saveAll() {
+  saveLocal();
+  await syncToCloud();
+}
 
 // ==============================
 // UTILITAIRES
 // ==============================
-
-function saveData() {
-  localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
-}
 
 function convertDate(str) {
   const [d, m, y] = str.split("/");
@@ -28,24 +98,17 @@ function formatDate(dateObj) {
   return `${d}/${m}/${y}`;
 }
 
-// ==============================
-// LONG PRESS HANDLER
-// ==============================
-
 function addLongPress(element, callback) {
-  let timer = null;
+  let timer;
 
   element.addEventListener("touchstart", () => {
     timer = setTimeout(callback, 700);
   });
 
   element.addEventListener("touchend", () => clearTimeout(timer));
-  element.addEventListener("touchcancel", () => clearTimeout(timer));
-
   element.addEventListener("mousedown", () => {
     timer = setTimeout(callback, 700);
   });
-
   element.addEventListener("mouseup", () => clearTimeout(timer));
   element.addEventListener("mouseleave", () => clearTimeout(timer));
 }
@@ -55,10 +118,6 @@ function addLongPress(element, callback) {
 // ==============================
 
 function renderHome() {
-
-  document.getElementById("detailView").classList.add("hidden");
-  document.getElementById("creditorList").classList.remove("hidden");
-
   const list = document.getElementById("creditorList");
   list.innerHTML = "";
 
@@ -87,20 +146,16 @@ function renderHome() {
 
     card.onclick = () => openDetail(name);
 
-    // 🔥 Suppression créancier par appui long
-    addLongPress(card, () => {
-
+    addLongPress(card, async () => {
       if (solde !== 0) {
         alert("Impossible de supprimer : solde ≠ 0 €");
         return;
       }
-
       if (confirm("Supprimer ce créancier ?")) {
         delete data[name];
-        saveData();
+        await saveAll();
         renderHome();
       }
-
     });
 
     list.appendChild(card);
@@ -121,14 +176,12 @@ function openDetail(name) {
 
   document.getElementById("creditorList").classList.add("hidden");
   document.getElementById("detailView").classList.remove("hidden");
-
   document.getElementById("detailTitle").innerText = name;
 
   renderDetail();
 }
 
 function renderDetail() {
-
   const ops = data[currentCreditor].operations || [];
 
   const years = [...new Set(
@@ -140,14 +193,12 @@ function renderDetail() {
 
   const allBtn = document.createElement("button");
   allBtn.innerText = "Toutes";
-  allBtn.className = selectedYear === "all" ? "active" : "";
   allBtn.onclick = () => { selectedYear = "all"; renderDetail(); };
   yearFilter.appendChild(allBtn);
 
   years.forEach(year => {
     const btn = document.createElement("button");
     btn.innerText = year;
-    btn.className = selectedYear === year ? "active" : "";
     btn.onclick = () => { selectedYear = year; renderDetail(); };
     yearFilter.appendChild(btn);
   });
@@ -167,9 +218,6 @@ function renderDetail() {
   document.getElementById("detailTotals").innerText =
     `Total dettes : ${totalDette.toFixed(2)} € | Solde : ${(totalDette-totalRemb).toFixed(2)} €`;
 
-  document.getElementById("tabDette").classList.toggle("active", currentTab==="dette");
-  document.getElementById("tabRemb").classList.toggle("active", currentTab==="remboursement");
-
   const list = document.getElementById("operationList");
   list.innerHTML = "";
 
@@ -188,11 +236,8 @@ function renderDetail() {
         <div>${op.type==="dette" ? "+" : "-"} ${op.montant.toFixed(2)} €</div>
       `;
 
-      // 🔥 Suppression opération par appui long
-      addLongPress(card, () => {
-
+      addLongPress(card, async () => {
         if (confirm("Supprimer cette opération ?")) {
-
           data[currentCreditor].operations =
             data[currentCreditor].operations.filter(o =>
               !(o.date === op.date &&
@@ -200,41 +245,28 @@ function renderDetail() {
                 o.montant === op.montant &&
                 o.type === op.type)
             );
-
-          saveData();
+          await saveAll();
           renderDetail();
         }
-
       });
 
       list.appendChild(card);
     });
 }
 
-function setTab(type) {
-  currentTab = type;
-  renderDetail();
-}
-
-function backToHome() {
-  currentCreditor = null;
-  renderHome();
-}
-
 // ==============================
-// AJOUT
+// ACTIONS
 // ==============================
 
-function addCreditor() {
+async function addCreditor() {
   const name = prompt("Nom du créancier :");
   if (!name || data[name]) return;
   data[name] = { operations: [] };
-  saveData();
+  await saveAll();
   renderHome();
 }
 
-function addOperation() {
-
+async function addOperation() {
   const label = prompt("Label ?");
   if (!label) return;
 
@@ -259,12 +291,12 @@ function addOperation() {
     date: dateInput
   });
 
-  saveData();
+  await saveAll();
   renderDetail();
 }
 
 // ==============================
-// BACKUP
+// BACKUP MANUEL
 // ==============================
 
 function exportBackup() {
@@ -282,13 +314,13 @@ function exportBackup() {
 function importBackup() {
   const input = document.getElementById("fileInput");
 
-  input.onchange = e => {
+  input.onchange = async e => {
     const file = e.target.files[0];
     const reader = new FileReader();
 
-    reader.onload = function(event) {
+    reader.onload = async function(event) {
       data = JSON.parse(event.target.result);
-      saveData();
+      await saveAll();
       renderHome();
     };
 
@@ -298,4 +330,12 @@ function importBackup() {
   input.click();
 }
 
-renderHome();
+// ==============================
+// INIT
+// ==============================
+
+document.addEventListener("DOMContentLoaded", async () => {
+  data = loadLocal();
+  renderHome();
+  initFirebase();
+});
