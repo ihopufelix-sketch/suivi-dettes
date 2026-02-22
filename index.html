@@ -29,34 +29,16 @@
 
     <section id="creditorList"></section>
 
-    <section id="detailView" class="hidden">
-      <button onclick="backToHome()">← Retour</button>
-      <h2 id="detailTitle"></h2>
-      <div id="detailTotals"></div>
-
-      <div id="yearFilter" class="year-filter"></div>
-
-      <div class="tabs">
-        <button id="tabDette" onclick="setTab('dette')">Dettes</button>
-        <button id="tabRemb" onclick="setTab('remboursement')">Remb.</button>
-      </div>
-
-      <button onclick="addOperation()">+ Ajouter opération</button>
-
-      <div id="operationList"></div>
-    </section>
-
   </div>
 
-  <!-- 🔥 FIREBASE CONFIG COMPLET -->
+  <!-- FIREBASE CONFIG -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import {
       getAuth,
       GoogleAuthProvider,
-      signInWithRedirect,
-      onAuthStateChanged,
-      getRedirectResult
+      signInWithPopup,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
     import {
       getFirestore,
@@ -82,9 +64,8 @@
     window.firebaseServices = {
       auth,
       provider,
-      signInWithRedirect,
+      signInWithPopup,
       onAuthStateChanged,
-      getRedirectResult,
       db,
       doc,
       getDoc,
