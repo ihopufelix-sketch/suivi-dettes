@@ -1,8 +1,6 @@
 // ==============================
-// RESET + HISTORIQUE COMPLET
+// INITIAL DATA (AVEC HISTORIQUE)
 // ==============================
-
-localStorage.removeItem("SUIVI_DETTES_DATA");
 
 const INITIAL_DATA = {
   "Laurine": {
@@ -50,51 +48,24 @@ const INITIAL_DATA = {
 
   "Alex": {
     "operations": [
-      { "type": "dette", "label": "Dette initiale", "montant": 12500, "date": "01/01/2022" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/03/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/04/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/05/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/06/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/07/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/08/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/09/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 200, "date": "29/10/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/11/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/12/2024" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/01/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "28/02/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/03/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/04/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/05/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/06/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/07/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/08/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/09/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/10/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/11/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/12/2025" },
-      { "type": "remboursement", "label": "REMB ALEX", "montant": 250, "date": "29/01/2026" }
+      { "type": "dette", "label": "Dette initiale", "montant": 12500, "date": "01/01/2022" }
     ]
   },
 
   "Anne-Sophie": {
     "operations": [
-      { "type": "dette", "label": "Billet Alana", "montant": 1674, "date": "01/06/2025" },
-      { "type": "dette", "label": "Pension alimentaire", "montant": 1056, "date": "01/01/2026" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 174, "date": "28/07/2025" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 150, "date": "28/08/2025" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 150, "date": "28/09/2025" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 150, "date": "28/10/2025" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 150, "date": "28/11/2025" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 150, "date": "28/12/2025" },
-      { "type": "remboursement", "label": "REMB ANNE-SO", "montant": 150, "date": "28/01/2026" }
+      { "type": "dette", "label": "Billet Alana", "montant": 1674, "date": "01/06/2025" }
     ]
   },
 
   "Famille": { "operations": [] }
 };
 
-let data = INITIAL_DATA;
+// ==============================
+// INITIALISATION
+// ==============================
+
+let data = JSON.parse(localStorage.getItem("SUIVI_DETTES_DATA")) || INITIAL_DATA;
 localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
 
 let currentCreditor = null;
@@ -109,6 +80,11 @@ function saveData() {
   localStorage.setItem("SUIVI_DETTES_DATA", JSON.stringify(data));
 }
 
+function convertDate(str) {
+  const [d, m, y] = str.split("/");
+  return new Date(y, m - 1, d);
+}
+
 function formatDate(dateObj) {
   const d = String(dateObj.getDate()).padStart(2, "0");
   const m = String(dateObj.getMonth() + 1).padStart(2, "0");
@@ -116,16 +92,12 @@ function formatDate(dateObj) {
   return `${d}/${m}/${y}`;
 }
 
-function convertDate(str) {
-  const [d, m, y] = str.split("/");
-  return new Date(y, m - 1, d);
-}
-
 // ==============================
 // HOME
 // ==============================
 
 function renderHome() {
+
   document.getElementById("detailView").classList.add("hidden");
   document.getElementById("creditorList").classList.remove("hidden");
 
@@ -178,7 +150,7 @@ function renderHome() {
 }
 
 // ==============================
-// DETAIL + FILTRE ANNÉE + SUPPRESSION
+// DETAIL
 // ==============================
 
 function openDetail(name) {
@@ -256,9 +228,17 @@ function renderDetail() {
 
       card.oncontextmenu = (e) => {
         e.preventDefault();
+
         if (confirm("Supprimer opération ?")) {
-          const index = data[currentCreditor].operations.indexOf(op);
-          data[currentCreditor].operations.splice(index,1);
+
+          data[currentCreditor].operations =
+            data[currentCreditor].operations.filter(o =>
+              !(o.date === op.date &&
+                o.label === op.label &&
+                o.montant === op.montant &&
+                o.type === op.type)
+            );
+
           saveData();
           renderDetail();
         }
